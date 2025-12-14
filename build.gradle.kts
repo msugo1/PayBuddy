@@ -1,8 +1,8 @@
 plugins {
 	kotlin("jvm")
 	kotlin("plugin.spring")
-	alias(libs.plugins.spring.boot)
-	alias(libs.plugins.spring.dependency.management)
+	id("org.springframework.boot")
+	id("io.spring.dependency-management")
 	alias(libs.plugins.asciidoctor)
 }
 
