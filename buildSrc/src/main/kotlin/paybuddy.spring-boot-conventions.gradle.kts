@@ -6,8 +6,6 @@ plugins {
 }
 
 dependencies {
-	implementation(libs.spring.boot.starter.web)
-	implementation(libs.jackson.module.kotlin)
 	implementation(libs.kotlin.reflect)
 
 	testImplementation(libs.spring.boot.starter.test)
