@@ -9,6 +9,10 @@ kotlin {
 	}
 }
 
+dependencies {
+	testImplementation(libs.kotlin.test.junit5)
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
