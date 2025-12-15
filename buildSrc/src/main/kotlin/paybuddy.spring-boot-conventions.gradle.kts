@@ -12,10 +12,6 @@ dependencies {
 	testRuntimeOnly(libs.junit.platform.launcher)
 }
 
-tasks.bootJar {
-	enabled = true
-}
-
 tasks.jar {
-	enabled = false
+	enabled = true
 }

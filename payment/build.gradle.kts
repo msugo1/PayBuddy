@@ -12,6 +12,14 @@ dependencies {
 	testImplementation(libs.spring.restdocs.mockmvc)
 }
 
+tasks.bootJar {
+	enabled = true
+}
+
+tasks.jar {
+	enabled = false
+}
+
 tasks.test {
 	outputs.dir(project.extra["snippetsDir"]!!)
 }
