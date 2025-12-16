@@ -1,30 +1,16 @@
 plugins {
-	id("paybuddy.spring-boot-conventions")
-	alias(libs.plugins.asciidoctor)
+    id("paybuddy.spring-boot-conventions")
 }
 
-extra["snippetsDir"] = file("build/generated-snippets")
-
 dependencies {
-	implementation(libs.spring.boot.starter.web)
-	implementation(libs.jackson.module.kotlin)
-
-	testImplementation(libs.spring.restdocs.mockmvc)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.jackson.module.kotlin)
 }
 
 tasks.bootJar {
-	enabled = true
+    enabled = true
 }
 
 tasks.jar {
-	enabled = false
-}
-
-tasks.test {
-	outputs.dir(project.extra["snippetsDir"]!!)
-}
-
-tasks.asciidoctor {
-	inputs.dir(project.extra["snippetsDir"]!!)
-	dependsOn(tasks.test)
+    enabled = false
 }
