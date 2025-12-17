@@ -1,7 +1,10 @@
 package com.paybuddy.payment.api
 
+<<<<<<< HEAD
 import com.paybuddy.payment.api.model.MerchantInfo
 import com.paybuddy.payment.service.PaymentOperations
+=======
+>>>>>>> 12bea298 (feat(payment): /payments/confirm API 구현)
 import com.paybuddy.payment.api.model.NextActionNone
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
@@ -185,6 +188,38 @@ class PaymentsApiController(
             .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/pay_test123/receipt"))
             .nextAction(NextActionNone("none"))
 
+<<<<<<< HEAD
+=======
+        val previousPaymentRequestHash = idempotencyStorage[idempotencyKey]
+        if (previousPaymentRequestHash == null) {
+            idempotencyStorage[idempotencyKey] = currentPaymentRequestHash
+            return
+        }
+
+        if (currentPaymentRequestHash == previousPaymentRequestHash) {
+            return
+        }
+
+        throw IdempotencyConflictException(idempotencyKey)
+    }
+
+    override fun confirmPayment(paymentConfirmRequest: PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
+        // Mock implementation for contract testing
+        val response = PaymentConfirmResponse(
+            "pay_1234567890",
+            "pay_test123",
+            "order-20251210-001",
+            "CAPTURED",
+            50000,
+            49900,
+            100,
+            OffsetDateTime.now(ZoneOffset.UTC)
+        )
+            .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
+            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/pay_test123/receipt"))
+            .nextAction(NextActionNone("none"))
+
+>>>>>>> 12bea298 (feat(payment): /payments/confirm API 구현)
         return ResponseEntity.ok(response)
     }
 }
