@@ -226,6 +226,7 @@ CardPaymentMethod:
     installment_months:
       type: integer
       description: 할부 개월 수 (0=일시불)
+      default: 0
       example: 0
     card_point_amount:
       type: integer

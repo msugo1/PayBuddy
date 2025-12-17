@@ -33,7 +33,6 @@ class PaymentsApiController(
     private val paymentOperations: PaymentOperations,
     private val idempotencyValidator: IdempotencyValidator
 ) : PaymentsApi {
-
     @ExceptionHandler(IdempotencyConflictException::class)
     fun handleIdempotencyConflict(
         e: IdempotencyConflictException
