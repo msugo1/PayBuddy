@@ -1,0 +1,185 @@
+CreateMerchantRequest:
+  type: object
+  required:
+    - legal_entity
+    - business_profile
+    - representative
+    - settlement_account
+  properties:
+    legal_entity:
+      type: object
+      required:
+        - type
+        - registration_number
+        - legal_name
+      properties:
+        type:
+          type: string
+          enum:
+            - INDIVIDUAL
+            - SOLE_PROP
+            - CORPORATION
+          description: |-
+            - INDIVIDUAL: 개인
+            - SOLE_PROP: 개인사업자
+            - CORPORATION: 법인사업자
+        registration_number:
+          type: string
+          description: 사업자등록번호
+          example: 123-45-67890
+        legal_name:
+          type: string
+          description: 법인명/상호
+          example: 홍길동상사
+    business_profile:
+      type: object
+      properties:
+        doing_business_as:
+          type: string
+          description: 상호명
+          example: 길동몰
+        mcc:
+          type: string
+          description: 업종 코드 (MCC)
+          example: '5311'
+        website_url:
+          type: string
+          format: uri
+          example: https://example.com
+        business_address:
+          $ref: '#/Address'
+    representative:
+      type: object
+      required:
+        - name
+        - phone
+        - email
+      properties:
+        name:
+          type: string
+          example: 홍길동
+        phone:
+          type: string
+          example: '+821012345678'
+        email:
+          type: string
+          format: email
+          example: owner@example.com
+    settlement_account:
+      type: object
+      required:
+        - bank_code
+        - account_number
+        - account_holder
+      properties:
+        bank_code:
+          type: string
+          example: '004'
+        account_number:
+          type: string
+          example: '12345678901234'
+        account_holder:
+          type: string
+          example: 홍길동
+
+MerchantResponse:
+  type: object
+  properties:
+    merchant_id:
+      type: string
+    status:
+      type: string
+      enum:
+        - PENDING_REVIEW
+        - APPROVED
+        - REJECTED
+        - NEEDS_MORE_INFO
+    preliminary_status:
+      type: string
+      enum:
+        - INSTANT_APPROVED
+        - MANUAL_REVIEW_REQUIRED
+      description: 즉시 승인 여부
+    kyc_status:
+      type: string
+      enum:
+        - AUTO_VERIFIED
+        - MANUAL_VERIFICATION_REQUIRED
+        - FAILED
+    daily_limit:
+      type: integer
+      description: 일일 거래 한도
+    required_documents:
+      type: array
+      items:
+        type: string
+        enum:
+          - BUSINESS_REGISTRATION
+          - BANK_ACCOUNT
+          - ID_CARD
+          - ADDITIONAL
+    api_keys:
+      type: object
+      description: 승인 시 발급
+      properties:
+        test_key:
+          type: string
+        live_key:
+          type: string
+    created_at:
+      type: string
+      format: date-time
+
+MerchantDetailResponse:
+  allOf:
+    - $ref: '#/MerchantResponse'
+    - type: object
+      properties:
+        legal_entity:
+          type: object
+        business_profile:
+          type: object
+        representative:
+          type: object
+        settlement_account:
+          type: object
+        fee_rate:
+          type: object
+          description: 수수료율
+          properties:
+            card_rate:
+              type: number
+              format: float
+              example: 3.0
+            transfer_rate:
+              type: number
+              format: float
+              example: 0.5
+        settlement_cycle:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - DAILY
+                - WEEKLY
+                - MONTHLY
+            delay_days:
+              type: integer
+              description: 정산 지연 일수
+              example: 3
+
+Address:
+  type: object
+  properties:
+    street:
+      type: string
+    city:
+      type: string
+    state:
+      type: string
+    postal_code:
+      type: string
+    country:
+      type: string
+      default: KR

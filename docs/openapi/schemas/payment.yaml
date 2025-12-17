@@ -1,0 +1,1280 @@
+# ============================================
+# NextAction Schemas (결제 진행 시 필요한 추가 액션)
+# ============================================
+NextAction:
+  description: 결제 진행을 위한 다음 단계 액션
+  oneOf:
+    - $ref: '#/NextAction3DS2Challenge'
+    - $ref: '#/NextActionAwaitDeposit'
+    - $ref: '#/NextActionQR'
+    - $ref: '#/NextActionPolling'
+    - $ref: '#/NextActionRedirect'
+    - $ref: '#/NextActionNone'
+  discriminator:
+    propertyName: type
+
+NextAction3DS2Challenge:
+  type: object
+  description: 3DS2 Challenge 인증이 필요한 경우 (iframe 기반)
+  required:
+    - type
+    - acs_url
+    - creq
+    - challenge_window_size
+  properties:
+    type:
+      type: string
+      example: challenge_3ds2
+    acs_url:
+      type: string
+      format: uri
+      description: ACS Challenge URL (iframe POST target)
+      example: https://acs.bank.com/3dsmethod/challenge
+    creq:
+      type: string
+      description: Base64 encoded Challenge Request (서버가 생성)
+      example: eyJtZXNzYWdlVHlwZSI6IkNSZXEi...
+    challenge_window_size:
+      type: string
+      enum: ["01", "02", "03", "04", "05"]
+      description: |
+        Challenge iframe 크기 코드 (서버가 결정)
+        - 01: 250x400
+        - 02: 390x400 (권장)
+        - 03: 500x600
+        - 04: 600x400
+        - 05: Full screen
+      example: "02"
+
+NextActionAwaitDeposit:
+  type: object
+  description: 가상계좌 입금 대기
+  required:
+    - type
+    - virtual_account
+  properties:
+    type:
+      type: string
+      example: await_deposit
+    virtual_account:
+      type: object
+      required:
+        - bank_code
+        - bank_name
+        - account_number
+        - expiry_date
+      properties:
+        bank_code:
+          type: string
+          example: "004"
+        bank_name:
+          type: string
+          example: KB국민은행
+        account_number:
+          type: string
+          description: 서버가 생성한 가상계좌 번호
+          example: "12345678901234"
+        depositor_name:
+          type: string
+          nullable: true
+          example: 홍길동
+        expiry_date:
+          type: string
+          format: date-time
+          description: 입금 기한
+
+NextActionQR:
+  type: object
+  description: QR 코드 표시 필요
+  required:
+    - type
+    - qr_code_url
+    - polling_url
+  properties:
+    type:
+      type: string
+      example: display_qr
+    qr_code_url:
+      type: string
+      format: uri
+      description: QR 코드 이미지 URL
+      example: https://api.paybuddy.com/qr/abc123.png
+    qr_data:
+      type: string
+      nullable: true
+      description: QR 코드 원본 데이터 (클라이언트가 직접 생성 가능)
+      example: paybuddy://pay?token=abc123
+    polling_url:
+      type: string
+      format: uri
+      description: 결제 상태 polling URL
+      example: https://api.paybuddy.com/v1/payments/pay_abc123/status
+    polling_interval_ms:
+      type: integer
+      description: Polling 간격 (밀리초)
+      example: 2000
+      default: 2000
+
+NextActionPolling:
+  type: object
+  description: 별도 디바이스에서 인증 진행 중 (앱 푸시 등)
+  required:
+    - type
+    - polling_url
+  properties:
+    type:
+      type: string
+      example: polling
+    message:
+      type: string
+      nullable: true
+      description: 사용자에게 표시할 안내 메시지
+      example: 뱅킹 앱에서 인증을 진행해주세요
+    polling_url:
+      type: string
+      format: uri
+      description: 결제 상태 polling URL
+    polling_interval_ms:
+      type: integer
+      description: Polling 간격 (밀리초)
+      example: 2000
+      default: 2000
+
+NextActionRedirect:
+  type: object
+  description: 외부 URL로 리다이렉트 필요 (은행 인증 등)
+  required:
+    - type
+    - redirect_url
+  properties:
+    type:
+      type: string
+      example: redirect
+    redirect_url:
+      type: string
+      format: uri
+      description: 리다이렉트 대상 URL
+      example: https://bank.com/auth?token=xxx
+    return_url:
+      type: string
+      format: uri
+      nullable: true
+      description: 완료 후 복귀 URL (서버가 callback 받음)
+      example: https://api.paybuddy.com/v1/payments/callback
+
+NextActionNone:
+  type: object
+  description: 추가 액션 불필요 (결제 완료)
+  required:
+    - type
+  properties:
+    type:
+      type: string
+      example: none
+
+# ============================================
+# Payment Method Schemas
+# ============================================
+
+PaymentMethod:
+  type: object
+  required:
+    - type
+  properties:
+    type:
+      type: string
+      enum:
+        - CARD
+        - VIRTUAL_ACCOUNT
+        - TRANSFER
+        - PHONE
+        - GIFT_CARD
+      description: 결제수단 타입
+    card:
+      $ref: '#/CardPaymentMethod'
+    virtual_account:
+      $ref: '#/VirtualAccountPaymentMethod'
+
+CardPaymentMethod:
+  type: object
+  required:
+    - card_number
+    - expiry_month
+    - expiry_year
+    - cvc
+  properties:
+    card_number:
+      type: string
+      description: 카드번호
+      example: '1234567890123456'
+    expiry_month:
+      type: string
+      example: '12'
+    expiry_year:
+      type: string
+      example: '2025'
+    cvc:
+      type: string
+      example: '123'
+    card_holder_name:
+      type: string
+      example: 홍길동
+    installment_months:
+      type: integer
+      description: 할부 개월 수 (0=일시불)
+      default: 0
+      example: 0
+    card_point_amount:
+      type: integer
+      minimum: 0
+      description: (선택) 카드사 포인트 사용 요청 금액(희망값). 0 또는 미전달이면 미사용. 최종 적용 금액은 발급사 정책으로 결정될 수 있습니다.
+      example: 10000
+    card_point_applied_amount:
+      type: integer
+      minimum: 0
+      description: (선택) 카드사에서 실제로 적용한 포인트 금액. 제공 가능한 연동에서만 내려갑니다.
+      example: 8000
+
+VirtualAccountPaymentMethod:
+  type: object
+  required:
+    - bank_code
+    - expiry_date
+  properties:
+    bank_code:
+      type: string
+      description: 은행 코드
+      example: '004'
+    expiry_date:
+      type: string
+      format: date-time
+      description: 입금 기한
+    depositor_name:
+      type: string
+      description: 입금자명
+      example: 홍길동
+
+PaymentResponse:
+  type: object
+  properties:
+    payment_id:
+      type: string
+      example: pay_1234567890
+    payment_key:
+      type: string
+      description: 결제 고유키 (URL 사용)
+      example: pay_abc123xyz
+    order_id:
+      type: string
+      example: order-20251210-001
+    status:
+      $ref: '#/PaymentStatus'
+    requested_at:
+      type: string
+      format: date-time
+    approved_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: 승인 완료 시각 (PENDING 상태에서는 null)
+    receipt_url:
+      type: string
+      format: uri
+      nullable: true
+      description: 영수증 URL (승인 완료 후 생성, PENDING 상태에서는 null)
+      example: https://api.paybuddy.com/v1/payments/pay_abc123xyz/receipt
+    total_amount:
+      type: integer
+      description: 총 결제금액(승인/정산 기준)
+    supply_amount:
+      type: integer
+      description: 공급가액
+      nullable: true
+    vat_amount:
+      type: integer
+      description: 부가세
+      nullable: true
+
+PaymentStatus:
+  type: string
+  description: |-
+    결제 상태 (가능한 값 - enum이 아닌 string으로 관리하여 확장성 보장)
+    - INITIALIZED: ready로 결제 세션이 생성됨(아직 승인 전)
+    - PENDING: 결제 대기/처리 중
+    - AUTHORIZED: 가승인(Preauthorize) 완료, 추후 confirm 재호출로 매입 확정 가능
+    - CAPTURED: 매입 확정 완료(즉시 결제 포함)
+    - APPROVED: (레거시) 승인 완료를 의미하며, 본 스펙에서는 CAPTURED와 동일 의미로 취급 가능
+    - FAILED: 실패
+    - VOIDED: 캡처 이전 승인취소(Authorization reversal)
+    - CANCELED: 전체 취소/환불
+    - PARTIAL_CANCELED: 부분 취소/환불
+    - EXPIRED: 세션/가승인 만료
+  example: CAPTURED
+
+PaymentDetailResponse:
+  allOf:
+    - $ref: '#/PaymentResponse'
+    - type: object
+      properties:
+        merchant:
+          $ref: '#/MerchantInfo'
+        payment_method:
+          type: object
+          description: 결제 수단 상세 정보
+          properties:
+            type:
+              type: string
+            card:
+              type: object
+              properties:
+                issuer:
+                  type: string
+                  example: 신한카드
+                acquirer:
+                  type: string
+                  example: KB국민카드
+                card_number:
+                  type: string
+                  description: 부분 마스킹
+                  example: 1234-56**-****-7890
+                card_type:
+                  type: string
+                  description: 카드 타입 (CREDIT, DEBIT, GIFT 등)
+                  example: CREDIT
+                approval_number:
+                  type: string
+                  example: '12345678'
+        fees:
+          type: object
+          description: 수수료 정보 (가맹점만 조회 가능)
+          properties:
+            pg_fee:
+              type: integer
+              example: 1500
+            card_fee:
+              type: integer
+              example: 1000
+            total_fee:
+              type: integer
+              example: 2500
+            settlement_amount:
+              type: integer
+              description: 실 정산액
+              example: 47500
+
+ReceiptResponse:
+  type: object
+  description: 소비자용 영수증 (민감정보 최소화)
+  properties:
+    receipt_id:
+      type: string
+    issued_at:
+      type: string
+      format: date-time
+    merchant:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 스타벅스 강남점
+        business_number:
+          type: string
+          example: 123-45-67890
+        representative:
+          type: string
+          example: 홍길동
+        address:
+          type: string
+          example: 서울시 강남구 테헤란로 123
+        tel:
+          type: string
+          example: 02-1234-5678
+    order:
+      type: object
+      properties:
+        order_id:
+          type: string
+        order_name:
+          type: string
+          example: 아메리카노 외 2건
+        ordered_at:
+          type: string
+          format: date-time
+    payment:
+      type: object
+      properties:
+        method:
+          type: string
+          example: 신한카드
+        card_number:
+          type: string
+          description: 강한 마스킹
+          example: 1234-56**-****-****
+        installment:
+          type: string
+          example: 일시불
+        approval_number:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+    print_url:
+      type: string
+      format: uri
+    pdf_url:
+      type: string
+      format: uri
+    total_amount:
+      type: integer
+      description: 총 결제금액(승인/정산 기준)
+    supply_amount:
+      type: integer
+      description: 공급가액
+      nullable: true
+    vat_amount:
+      type: integer
+      description: 부가세
+      nullable: true
+
+CreateCompositePaymentRequest:
+  type: object
+  required:
+    - merchant_id
+    - order_id
+    - total_amount
+    - payment_items
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+    merchant_id:
+      type: string
+    order_id:
+      type: string
+    total_amount:
+      type: integer
+      description: 전체 결제금액
+    payment_items:
+      type: array
+      description: 결제 항목 리스트
+      items:
+        type: object
+        required:
+          - amount
+          - payment_method
+        properties:
+          amount:
+            type: integer
+          payment_method:
+            $ref: '#/PaymentMethod'
+          description:
+            type: string
+            example: 신한카드 결제분
+
+CompositePaymentResponse:
+  type: object
+  properties:
+    payment_id:
+      type: string
+      description: 복합 결제 ID
+    payment_key:
+      type: string
+      description: 복합 결제 키
+    payment_type:
+      type: string
+      enum:
+        - SINGLE
+        - COMPOSITE
+      default: COMPOSITE
+      description: 결제 타입
+    order_id:
+      type: string
+    status:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - PARTIAL_APPROVED
+        - FAILED
+        - CANCELED
+      description: |-
+        - PENDING: 처리 중
+        - APPROVED: 전체 승인
+        - PARTIAL_APPROVED: 부분 승인
+        - FAILED: 전체 실패
+        - CANCELED: 취소됨
+    total_amount:
+      type: integer
+    approved_amount:
+      type: integer
+      description: 승인된 금액
+    remaining_amount:
+      type: integer
+      description: 남은 금액
+    payment_items:
+      type: array
+      items:
+        type: object
+        properties:
+          sub_payment_id:
+            type: string
+          sub_payment_key:
+            type: string
+          status:
+            $ref: '#/PaymentStatus'
+          amount:
+            type: integer
+          payment_method:
+            type: object
+            properties:
+              type:
+                type: string
+          failure_reason:
+            type: string
+            description: 실패 시 사유
+          approved_at:
+            type: string
+            format: date-time
+
+RetryPaymentRequest:
+  type: object
+  required:
+    - payment_key
+    - retry_items
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+    retry_items:
+      type: array
+      description: 재시도할 항목
+      items:
+        type: object
+        required:
+          - sub_payment_id
+        properties:
+          sub_payment_id:
+            type: string
+            description: 재시도할 하위 결제 ID
+          payment_method:
+            $ref: '#/PaymentMethod'
+            description: |-
+              결제수단 정보 (선택)
+              - 30분 이내: 생략 가능 (저장된 빌링키 사용)
+              - 30분 이후: 필수 (재입력)
+              - 다른 결제수단 사용: 새 정보 입력
+
+              비즈니스 규칙:
+              - 가상계좌(VIRTUAL_ACCOUNT)는 재시도 불가능
+              - 서버에서 검증 후 에러 반환
+
+CreateBillingKeyRequest:
+  type: object
+  required:
+    - merchant_id
+    - customer_id
+    - payment_method
+  properties:
+    merchant_id:
+      type: string
+    customer_id:
+      type: string
+    payment_method:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - card
+          properties:
+            type:
+              type: string
+              enum:
+                - CARD
+            card:
+              $ref: '#/CardPaymentMethod'
+        - type: object
+          required:
+            - type
+            - account
+          properties:
+            type:
+              type: string
+              enum:
+                - ACCOUNT
+              description: 계좌 자동이체 (CMS)
+            account:
+              type: object
+              required:
+                - bank_code
+                - account_number
+                - account_holder
+              properties:
+                bank_code:
+                  type: string
+                  example: '004'
+                account_number:
+                  type: string
+                  example: '12345678901234'
+                account_holder:
+                  type: string
+                  example: 홍길동
+    authentication:
+      type: object
+      description: 본인 인증 정보
+      properties:
+        method:
+          type: string
+          enum:
+            - SMS_OTP
+            - 3DS
+            - APP_PUSH
+        auth_code:
+          type: string
+
+BillingKeyResponse:
+  type: object
+  properties:
+    billing_key:
+      type: string
+      description: 빌링키 (암호화된 결제수단 정보)
+      example: billing_abc123xyz
+    customer_id:
+      type: string
+    payment_method_type:
+      type: string
+      enum:
+        - CARD
+        - ACCOUNT
+      description: 결제수단 타입
+    card_info:
+      type: object
+      description: 카드 빌링키인 경우
+      nullable: true
+      properties:
+        issuer:
+          type: string
+        card_number:
+          type: string
+          description: 마스킹된 카드번호
+          example: 1234-56**-****-****
+        card_type:
+          type: string
+    account_info:
+      type: object
+      description: 계좌 빌링키인 경우
+      nullable: true
+      properties:
+        bank_code:
+          type: string
+        account_number:
+          type: string
+          description: 마스킹된 계좌번호
+          example: 1234********34
+        account_holder:
+          type: string
+    created_at:
+      type: string
+      format: date-time
+    expires_at:
+      type: string
+      format: date-time
+      description: 빌링키 만료일
+
+BillingPaymentRequest:
+  type: object
+  required:
+    - billing_key
+    - order_id
+    - total_amount
+    - supply_amount
+    - vat_amount
+  properties:
+    billing_key:
+      type: string
+    order_id:
+      type: string
+    total_amount:
+      type: integer
+      description: 총 결제금액(승인/정산 기준)
+    supply_amount:
+      type: integer
+      description: 공급가액
+    vat_amount:
+      type: integer
+      description: 부가세
+
+RefundAccount:
+  type: object
+  description: 환불 계좌 정보 (가상계좌 결제 취소 시 필수)
+  required:
+    - bank_code
+    - account_number
+    - account_holder
+  properties:
+    bank_code:
+      type: string
+      example: '004'
+    account_number:
+      type: string
+      example: '12345678901234'
+    account_holder:
+      type: string
+      example: 홍길동
+
+CancelPaymentRequest:
+  type: object
+  required:
+    - payment_key
+    - cancel_reason
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+    cancel_amount:
+      type: integer
+      nullable: true
+      description: |-
+        취소 금액 (단일 결제 시 사용)
+        - null 또는 생략: 전체 취소
+        - 지정: 해당 금액만 부분 취소
+
+        복합 결제 시에는 무시됨 (cancel_items 사용)
+      example: 20000
+    cancel_items:
+      type: array
+      nullable: true
+      description: |-
+        취소할 항목 목록 (복합 결제 시 사용)
+        - null 또는 생략: 모든 항목 전체 취소
+        - 지정: 해당 항목만 취소
+
+        단일 결제 시에는 무시됨
+      items:
+        type: object
+        required:
+          - sub_payment_id
+        properties:
+          sub_payment_id:
+            type: string
+            description: 취소할 하위 결제 ID
+          cancel_amount:
+            type: integer
+            nullable: true
+            description: |-
+              해당 항목의 취소 금액
+              - null 또는 생략: 항목 전액 취소
+              - 지정: 항목의 부분 취소
+    cancel_reason:
+      type: string
+      description: 취소 사유
+      example: 고객 요청
+    refund_account:
+      $ref: '#/RefundAccount'
+      description: 환불 계좌 (가상계좌 결제 시 필수)
+
+CancelPaymentResponse:
+  type: object
+  properties:
+    payment_id:
+      type: string
+    payment_key:
+      type: string
+    cancel_id:
+      type: string
+      description: 취소 트랜잭션 ID
+    status:
+      type: string
+      enum:
+        - CANCELED
+        - PARTIAL_CANCELED
+      description: |-
+        - CANCELED: 전체 취소
+        - PARTIAL_CANCELED: 부분 취소
+    canceled_amount:
+      type: integer
+      description: 취소된 금액
+    remaining_amount:
+      type: integer
+      description: 남은 금액
+    canceled_items:
+      type: array
+      description: 취소된 항목 상세 (복합 결제 시)
+      nullable: true
+      items:
+        type: object
+        properties:
+          sub_payment_id:
+            type: string
+          sub_payment_key:
+            type: string
+          status:
+            type: string
+            enum:
+              - CANCELED
+              - PARTIAL_CANCELED
+              - APPROVED
+          original_amount:
+            type: integer
+            description: 원래 결제 금액
+          canceled_amount:
+            type: integer
+            description: 취소된 금액
+          remaining_amount:
+            type: integer
+            description: 남은 금액 (부분 취소 시)
+    canceled_at:
+      type: string
+      format: date-time
+
+ChargebacksResponse:
+  type: object
+  properties:
+    chargebacks:
+      type: array
+      items:
+        type: object
+        properties:
+          chargeback_id:
+            type: string
+          payment_id:
+            type: string
+          status:
+            type: string
+            enum:
+              - PENDING
+              - UNDER_REVIEW
+              - MERCHANT_WIN
+              - MERCHANT_LOSE
+          reason_code:
+            type: string
+            example: '10.4'
+          reason:
+            type: string
+            example: FRAUD
+          amount:
+            type: integer
+          claimed_at:
+            type: string
+            format: date-time
+          response_deadline:
+            type: string
+            format: date-time
+    pagination:
+      $ref: '#/Pagination'
+
+ChargebackDetailResponse:
+  type: object
+  properties:
+    chargeback_id:
+      type: string
+    card_issuer_chargeback_id:
+      type: string
+      description: 카드사 측 차지백 ID
+    payment:
+      type: object
+      properties:
+        payment_id:
+          type: string
+        approval_number:
+          type: string
+        transaction_date:
+          type: string
+          format: date
+        amount:
+          type: integer
+    status:
+      type: string
+    reason_code:
+      type: string
+    reason:
+      type: string
+    claim:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        content:
+          type: string
+    response_deadline:
+      type: string
+      format: date-time
+    merchant_evidence:
+      type: object
+      description: 가맹점이 제출한 증빙
+      properties:
+        submitted_at:
+          type: string
+          format: date-time
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              url:
+                type: string
+    decision:
+      type: object
+      description: 카드사 결정
+      properties:
+        result:
+          type: string
+          enum:
+            - MERCHANT_WIN
+            - MERCHANT_LOSE
+            - PARTIAL
+        decided_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+DisputeChargebackRequest:
+  type: object
+  required:
+    - evidence_type
+    - documents
+  properties:
+    evidence_type:
+      type: string
+      enum:
+        - PROOF_OF_DELIVERY
+        - PROOF_OF_SERVICE
+        - CUSTOMER_COMMUNICATION
+        - TRANSACTION_LOGS
+    documents:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - PDF
+              - IMAGE
+              - TEXT
+          url:
+            type: string
+            format: uri
+          description:
+            type: string
+    narrative:
+      type: string
+      description: 증빙 설명
+    transaction_metadata:
+      type: object
+      description: 거래 시점 메타데이터
+      properties:
+        ip_address:
+          type: string
+        device_fingerprint:
+          type: string
+        authentication_method:
+          type: string
+        cvv_verified:
+          type: boolean
+
+DisputeChargebackResponse:
+  type: object
+  properties:
+    chargeback_id:
+      type: string
+    status:
+      type: string
+      example: UNDER_REVIEW
+    evidence_submitted_at:
+      type: string
+      format: date-time
+    review_expected_date:
+      type: string
+      format: date
+      description: 심사 예정일
+
+PaymentWebhookEvent:
+  type: object
+  required:
+    - event_type
+    - event_id
+    - timestamp
+    - payment
+  properties:
+    event_type:
+      type: string
+      enum:
+        - PAYMENT_APPROVED
+        - PAYMENT_FAILED
+        - PAYMENT_CANCELED
+        - VIRTUAL_ACCOUNT_DEPOSITED
+      description: 이벤트 타입
+    event_id:
+      type: string
+      description: 이벤트 고유 ID
+      example: evt_abc123
+    timestamp:
+      type: string
+      format: date-time
+      description: 이벤트 발생 시각
+    signature:
+      type: string
+      description: Webhook 검증용 서명 (HMAC-SHA256)
+      example: sha256=abc123...
+    payment:
+      type: object
+      description: 결제 정보
+      properties:
+        payment_id:
+          type: string
+        payment_key:
+          type: string
+        order_id:
+          type: string
+        status:
+          type: string
+        amount:
+          type: integer
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+ChargebackWebhookEvent:
+  type: object
+  required:
+    - event_type
+    - event_id
+    - timestamp
+    - chargeback
+  properties:
+    event_type:
+      type: string
+      enum:
+        - CHARGEBACK_CREATED
+        - CHARGEBACK_DECISION
+      description: 차지백 이벤트 타입
+    event_id:
+      type: string
+      example: evt_cb_123
+    timestamp:
+      type: string
+      format: date-time
+      description: 이벤트 발생 시각
+    signature:
+      type: string
+      description: Webhook 검증용 서명
+    chargeback:
+      type: object
+      description: 차지백 정보
+      properties:
+        chargeback_id:
+          type: string
+        card_issuer_chargeback_id:
+          type: string
+        reason_code:
+          type: string
+        reason:
+          type: string
+        amount:
+          type: integer
+        original_transaction:
+          type: object
+          properties:
+            approval_number:
+              type: string
+            transaction_date:
+              type: string
+              format: date
+        response_deadline:
+          type: string
+          format: date-time
+
+MerchantInfo:
+  type: object
+  description: 결제 응답에 포함되는 가맹점 기본 정보
+  properties:
+    merchant_id:
+      type: string
+    merchant_name:
+      type: string
+    business_number:
+      type: string
+    mcc_code:
+      type: string
+
+PaymentReadyRequest:
+  type: object
+  required:
+    - merchant_id
+    - order_id
+    - total_amount
+    - supply_amount
+    - vat_amount
+    - redirect_url
+  properties:
+    merchant_id:
+      type: string
+      description: 가맹점 ID
+      example: mch_1234567890
+    order_id:
+      type: string
+      description: 주문 ID (가맹점 기준 멱등 키)
+      example: order-20251210-001
+    total_amount:
+      type: integer
+      description: 총 결제금액(승인/정산 기준)
+      example: 50000
+      minimum: 0
+    supply_amount:
+      type: integer
+      description: 공급가액
+      example: 45455
+      minimum: 0
+    vat_amount:
+      type: integer
+      description: 부가세액
+      example: 4545
+      minimum: 0
+    redirect_url:
+      type: string
+      format: uri
+      description: 결제 완료 후 리다이렉트 URL(가맹점 복귀)
+      example: https://merchant.example.com/pay/return
+
+PaymentNextAction:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+        - REDIRECT
+        - QR
+        - POLL
+        - NONE
+      description: 다음 단계 진행 방식
+    redirect_url:
+      type: string
+      nullable: true
+      description: 리다이렉트 진행 시 URL
+    qr_payload:
+      type: string
+      nullable: true
+      description: QR 렌더링을 위한 페이로드(딥링크/토큰 등)
+    poll_url:
+      type: string
+      nullable: true
+      description: 상태 폴링 URL
+
+PaymentReadyResponse:
+  type: object
+  additionalProperties: false
+  required:
+    - paymentKey
+    - checkoutUrl
+    - expiresAt
+  properties:
+    paymentKey:
+      type: string
+      description: 결제 세션/결제 고유키
+      example: paybuddy-payment
+    checkoutUrl:
+      type: string
+      description: 결제창(Checkout) URL
+      example: https://payment.paybuddy.com/checkout
+    expiresAt:
+      type: string
+      format: date-time
+      description: 결제 세션 만료 시각 (기본 10분)
+
+PaymentConfirmRequest:
+  type: object
+  description: |-
+    결제 진행(Confirm) API입니다.
+    - INITIALIZED/PENDING 단계: 결제수단에 따라 승인/계좌발급 등 결제 진행을 시작합니다.
+    - AUTHORIZED 단계: (카드 가승인인 경우) 캡처를 수행합니다.
+
+    결제 금액은 ready 단계에서 이미 생성되어 있으므로, confirm 요청에는 결제수단만 전달합니다.
+  required:
+    - payment_key
+    - payment_method
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+      example: pay_abc123xyz
+    payment_method:
+      $ref: '#/PaymentMethod'
+
+PaymentConfirmResponse:
+  type: object
+  required:
+    - payment_id
+    - payment_key
+    - order_id
+    - status
+    - total_amount
+    - supply_amount
+    - vat_amount
+    - requested_at
+  properties:
+    payment_id:
+      type: string
+      example: pay_1234567890
+    payment_key:
+      type: string
+      description: 결제 고유키 (URL 사용)
+      example: pay_abc123xyz
+    order_id:
+      type: string
+      example: order-20251210-001
+    status:
+      type: string
+      description: 결제 상태 (INITIALIZED, PENDING, AUTHORIZED, CAPTURED, FAILED 등)
+      example: CAPTURED
+    total_amount:
+      type: integer
+      description: 총 결제금액(승인/정산 기준)
+      example: 50000
+    supply_amount:
+      type: integer
+      description: 공급가액
+      example: 45455
+    vat_amount:
+      type: integer
+      description: 부가세
+      example: 4545
+    requested_at:
+      type: string
+      format: date-time
+      description: 결제 요청 시각
+    approved_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: 승인 완료 시각 (PENDING 상태에서는 null)
+    receipt_url:
+      type: string
+      format: uri
+      nullable: true
+      description: 영수증 URL (승인 완료 후 생성, PENDING 상태에서는 null)
+      example: https://api.paybuddy.com/v1/payments/pay_abc123xyz/receipt
+    next_action:
+      $ref: '#/NextAction'
+      nullable: true
+      description: 사용자가 수행해야 할 다음 액션 (없으면 완료)
+
+Pagination:
+  type: object
+  properties:
+    page:
+      type: integer
+      description: 현재 페이지
+    per_page:
+      type: integer
+      description: 페이지당 항목 수
+    total:
+      type: integer
+      description: 전체 항목 수
+    has_more:
+      type: boolean
+      description: 다음 페이지 존재 여부
