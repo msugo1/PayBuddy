@@ -1,5 +1,6 @@
 package com.paybuddy.payment.api
 
+import com.paybuddy.payment.api.model.NextActionNone
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
 import com.paybuddy.payment.api.model.PaymentDetailResponse
@@ -80,6 +81,21 @@ class PaymentsApiController : PaymentsApi {
     }
 
     override fun confirmPayment(paymentConfirmRequest: PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
-        TODO("Not yet implemented")
+        // Mock implementation for contract testing
+        val response = PaymentConfirmResponse(
+            "pay_1234567890",
+            "pay_test123",
+            "order-20251210-001",
+            "CAPTURED",
+            50000,
+            49900,
+            100,
+            OffsetDateTime.now(ZoneOffset.UTC)
+        )
+            .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
+            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/pay_test123/receipt"))
+            .nextAction(NextActionNone("none"))
+
+        return ResponseEntity.ok(response)
     }
 }

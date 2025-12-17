@@ -1,0 +1,92 @@
+package com.paybuddy.payment.api
+
+import com.atlassian.oai.validator.OpenApiInteractionValidator
+import com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.openApi
+import com.atlassian.oai.validator.report.LevelResolver
+import com.atlassian.oai.validator.report.ValidationReport.Level
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import java.io.File
+
+@WebMvcTest(PaymentsApiController::class)
+class PaymentConfirmApiContractTest {
+
+    @Autowired
+    private lateinit var mockMvc: MockMvc
+
+    private val specFile = File("../docs/openapi/api/payment.yaml").absoluteFile
+    private val validator = OpenApiInteractionValidator
+        .createForSpecificationUrl(specFile.toURI().toString())
+        .withLevelResolver(LevelResolver.create()
+            // swagger-request-validator는 요청/응답을 함께 검증한다.
+            // 본 테스트에서는 요청 유효성은 서버(@Valid) 책임으로 두고,
+            // 응답 계약 검증에 집중하기 위해 request body 검증을 무시한다.
+            .withLevel("validation.request.body", Level.IGNORE)
+            .build()
+        )
+        .build()
+
+    @Test
+    fun `결제 승인 성공 - 200 OK`() {
+        mockMvc.perform(
+            post("/payments/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                        "payment_key": "pay_test123",
+                        "payment_method": {
+                            "type": "CARD",
+                            "card": {
+                                "card_number": "1234567890123456",
+                                "expiry_month": "12",
+                                "expiry_year": "2025",
+                                "cvc": "123"
+                            }
+                        }
+                    }
+                    """.trimIndent()
+                )
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(openApi().isValid(validator))
+    }
+
+    @Test
+    fun `잘못된 요청 (필수 필드 누락) - 400 Bad Request`() {
+        mockMvc.perform(
+            post("/payments/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                        "payment_key": "pay_test123"
+                    }
+                    """.trimIndent()
+                )
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(openApi().isValid(validator))
+    }
+
+    @Disabled("인증/보안 필터가 아직 추가되지 않아 향후 401 추가필요")
+    @Test
+    fun `결제 승인 실패 - 401 Unauthorized (인증 실패)`() {
+    }
+
+    @Disabled("비즈니스 로직이 아직 구현되지 않아 향후 422 추가필요 - 예: CANCELED 상태의 결제를 confirm 시도")
+    @Test
+    fun `결제 승인 실패 - 422 Unprocessable Entity (처리 불가능)`() {
+    }
+}
