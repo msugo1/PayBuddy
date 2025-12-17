@@ -4,16 +4,19 @@ import com.paybuddy.payment.api.model.MerchantInfo
 import com.paybuddy.payment.api.model.NextActionNone
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
-import com.paybuddy.payment.api.model.PaymentReadyRequest
-import com.paybuddy.payment.api.model.PaymentReadyResponse
-import com.paybuddy.payment.api.model.PaymentResponse
+import com.paybuddy.payment.api.model.PaymentDetailResponse
 import com.paybuddy.payment.api.model.PaymentResponseFees
 import com.paybuddy.payment.api.model.PaymentResponsePaymentMethod
 import com.paybuddy.payment.api.model.PaymentResponsePaymentMethodCard
+import com.paybuddy.payment.api.model.PaymentReadyRequest
+import com.paybuddy.payment.api.model.PaymentReadyResponse
+import com.paybuddy.payment.api.model.PaymentResponse
 import com.paybuddy.payment.api.model.ReceiptResponse
 import com.paybuddy.payment.api.model.ReceiptResponseMerchant
 import com.paybuddy.payment.api.model.ReceiptResponseOrder
 import com.paybuddy.payment.api.model.ReceiptResponsePayment
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -44,8 +47,8 @@ class PaymentsApiController : PaymentsApi {
 
     private val idempotencyStorage = mutableMapOf<String, String>()
 
-    override fun getPayment(paymentKey: String): ResponseEntity<PaymentResponse> {
-        val response = PaymentResponse()
+    override fun getPayment(paymentKey: @NotNull String?): ResponseEntity<PaymentDetailResponse> {
+        val response = PaymentDetailResponse()
             .paymentId("pay_1234567890")
             .paymentKey(paymentKey)
             .orderId("order-20251218-001")
@@ -87,8 +90,8 @@ class PaymentsApiController : PaymentsApi {
     }
 
     override fun getPaymentReceipt(
-        paymentKey: String,
-        format: String
+        paymentKey: @NotNull String?,
+        format: @Valid String?
     ): ResponseEntity<ReceiptResponse> {
         val response = ReceiptResponse()
             .receiptId("receipt_12345")
@@ -125,18 +128,10 @@ class PaymentsApiController : PaymentsApi {
     }
 
     override fun readyPayment(
-        idempotencyKey: String,
-        paymentReadyRequest: PaymentReadyRequest
-    ): ResponseEntity<PaymentReadyResponse> {
-        verifyIdempotentRequest(idempotencyKey, paymentReadyRequest)
-
-        val response = PaymentReadyResponse(
-            "paybuddy-payment",
-            "https://payment.paybuddy.com/checkout",
-            OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10)
-        )
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(response)
+        idempotencyKey: @NotNull String?,
+        paymentReadyRequest: @Valid PaymentReadyRequest?
+    ): ResponseEntity<PaymentReadyResponse?>? {
+        TODO("Not yet implemented")
     }
 
     private fun verifyIdempotentRequest(idempotencyKey: String, request: com.paybuddy.payment.api.model.PaymentReadyRequest) {
@@ -156,7 +151,7 @@ class PaymentsApiController : PaymentsApi {
         throw IdempotencyConflictException(idempotencyKey)
     }
 
-    override fun confirmPayment(paymentConfirmRequest: PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
+    override fun confirmPayment(paymentConfirmRequest: @Valid PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
         // Mock implementation for contract testing
         val response = PaymentConfirmResponse(
             "pay_1234567890",

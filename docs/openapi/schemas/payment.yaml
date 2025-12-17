@@ -226,12 +226,14 @@ CardPaymentMethod:
     installment_months:
       type: integer
       description: 할부 개월 수 (0=일시불)
+      default: 0
       example: 0
     card_point_amount:
       type: integer
       minimum: 0
       description: 카드사 포인트 사용 금액. 0 또는 미전달 시 미사용.
       example: 10000
+
 
 VirtualAccountPaymentMethod:
   type: object
@@ -354,6 +356,10 @@ PaymentStatus:
     - PARTIAL_CANCELED: 부분 취소/환불
     - EXPIRED: 세션/가승인 만료
   example: CAPTURED
+
+PaymentDetailResponse:
+  allOf:
+    - $ref: '#/PaymentResponse'
 
 ReceiptResponse:
   type: object
