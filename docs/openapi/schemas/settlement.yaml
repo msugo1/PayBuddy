@@ -1,0 +1,77 @@
+SettlementsResponse:
+  type: object
+  properties:
+    merchant_id:
+      type: string
+    period:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+    summary:
+      type: object
+      properties:
+        total_sales:
+          type: integer
+          description: 총 매출
+        total_cancel:
+          type: integer
+          description: 총 취소액
+        total_fee:
+          type: integer
+          description: 총 수수료
+        net_settlement:
+          type: integer
+          description: 순 정산액
+    settlements:
+      type: array
+      items:
+        type: object
+        properties:
+          settlement_id:
+            type: string
+          status:
+            type: string
+            enum:
+              - PENDING
+              - COMPLETED
+              - FAILED
+          settlement_date:
+            type: string
+            format: date
+          transaction_count:
+            type: integer
+          sales_amount:
+            type: integer
+          cancel_amount:
+            type: integer
+          fee_amount:
+            type: integer
+          net_amount:
+            type: integer
+          transferred_at:
+            type: string
+            format: date-time
+            description: 지급 완료 시각
+    pagination:
+      $ref: '#/Pagination'
+
+Pagination:
+  type: object
+  properties:
+    page:
+      type: integer
+      description: 현재 페이지
+    per_page:
+      type: integer
+      description: 페이지당 항목 수
+    total:
+      type: integer
+      description: 전체 항목 수
+    has_more:
+      type: boolean
+      description: 다음 페이지 존재 여부
