@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: PayBuddy Merchant API
+  version: 1.0.0
+  description: |
+    PayBuddy 가맹점 도메인 API
+
+    - 가맹점 등록 및 관리
+    - KYC/KYB 검증
+    - 서류 제출
+  contact:
+    name: PayBuddy API Support
+    email: api@paybuddy.com
+
+servers:
+  - url: https://api.paybuddy.com/v1
+    description: Production
+  - url: https://sandbox-api.paybuddy.com/v1
+    description: Sandbox
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Merchants
+    description: 가맹점 등록 및 관리
+
+paths:
+  /merchants:
+    post:
+      tags:
+        - Merchants
+      summary: 가맹점 등록 신청
+      description: |-
+        가맹점 등록을 신청합니다.
+        - KYC/KYB 검증
+        - 사업자등록번호 검증
+        - 업종 위험도 평가
+      operationId: createMerchant
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/merchant.yaml#/CreateMerchantRequest'
+      responses:
+        '201':
+          description: 신청 접수 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/merchant.yaml#/MerchantResponse'
+  /merchants/{merchant_id}:
+    get:
+      tags:
+        - Merchants
+      summary: 가맹점 정보 조회
+      operationId: getMerchant
+      parameters:
+        - name: merchant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/merchant.yaml#/MerchantDetailResponse'
+  /merchants/{merchant_id}/documents:
+    post:
+      tags:
+        - Merchants
+      summary: 가맹점 서류 제출
+      description: |-
+        가맹점 심사를 위한 추가 서류를 제출합니다.
+        - 사업자등록증
+        - 통장 사본
+        - 신분증
+      operationId: uploadMerchantDocuments
+      parameters:
+        - name: merchant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document_type:
+                  type: string
+                  enum:
+                    - BUSINESS_REGISTRATION
+                    - BANK_ACCOUNT
+                    - ID_CARD
+                    - ADDITIONAL
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 서류 제출 성공
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 가맹점 API Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰 (내부 서비스용)

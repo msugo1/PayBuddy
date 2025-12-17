@@ -1,0 +1,145 @@
+CreateLedgerRecordRequest:
+  type: object
+  required:
+    - transaction_id
+    - transaction_type
+    - amount
+  properties:
+    transaction_id:
+      type: string
+      description: 관련 트랜잭션 ID
+    transaction_type:
+      type: string
+      enum:
+        - PAYMENT
+        - CANCEL
+        - SETTLEMENT
+        - FEE
+        - CHARGEBACK
+    amount:
+      type: integer
+    fee_amount:
+      type: integer
+    vat_amount:
+      type: integer
+    merchant_id:
+      type: string
+    payment_id:
+      type: string
+    order_id:
+      type: string
+    description:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+
+LedgerRecordResponse:
+  type: object
+  properties:
+    record_id:
+      type: string
+    transaction_id:
+      type: string
+    status:
+      type: string
+      enum:
+        - RECORDED
+        - FAILED
+    recorded_at:
+      type: string
+      format: date-time
+
+LedgersResponse:
+  type: object
+  properties:
+    merchant_id:
+      type: string
+    summary:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        filtered_records:
+          type: integer
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        balance:
+          type: object
+          properties:
+            opening:
+              type: integer
+              description: 기초 잔액
+            closing:
+              type: integer
+              description: 기말 잔액
+            change:
+              type: integer
+              description: 변동액
+        totals:
+          type: object
+          properties:
+            payments:
+              type: integer
+            refunds:
+              type: integer
+            fees:
+              type: integer
+            settlements:
+              type: integer
+    records:
+      type: array
+      items:
+        type: object
+        properties:
+          record_id:
+            type: string
+          type:
+            type: string
+          amount:
+            type: integer
+          fee_amount:
+            type: integer
+          vat_amount:
+            type: integer
+          net_amount:
+            type: integer
+          source:
+            type: object
+            properties:
+              type:
+                type: string
+              id:
+                type: string
+              order_id:
+                type: string
+          created_at:
+            type: string
+            format: date-time
+          description:
+            type: string
+    pagination:
+      $ref: '#/Pagination'
+
+Pagination:
+  type: object
+  properties:
+    page:
+      type: integer
+      description: 현재 페이지
+    per_page:
+      type: integer
+      description: 페이지당 항목 수
+    total:
+      type: integer
+      description: 전체 항목 수
+    has_more:
+      type: boolean
+      description: 다음 페이지 존재 여부

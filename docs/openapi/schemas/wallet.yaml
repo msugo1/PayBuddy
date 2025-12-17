@@ -1,0 +1,105 @@
+TopupPointsRequest:
+  type: object
+  required:
+    - amount
+    - billing_key
+  properties:
+    amount:
+      type: integer
+      description: 충전 금액
+      example: 100000
+    billing_key:
+      type: string
+      description: 빌링키로 충전
+      example: billing_abc123
+
+PointsResponse:
+  type: object
+  properties:
+    transaction_id:
+      type: string
+    balance:
+      type: integer
+      description: 충전 후 잔액
+    points_added:
+      type: integer
+    bonus_points:
+      type: integer
+      description: 추가 지급 포인트
+    charged_at:
+      type: string
+      format: date-time
+
+PointsBalanceResponse:
+  type: object
+  properties:
+    customer_id:
+      type: string
+    balance:
+      type: integer
+    available_balance:
+      type: integer
+      description: 사용 가능 포인트
+    pending_balance:
+      type: integer
+      description: 적립 예정 포인트
+    last_updated_at:
+      type: string
+      format: date-time
+
+JoinMembershipRequest:
+  type: object
+  required:
+    - plan
+    - amount
+    - billing_key
+  properties:
+    plan:
+      type: string
+      enum:
+        - MONTHLY
+        - YEARLY
+      description: 멤버십 플랜
+    amount:
+      type: integer
+      description: 멤버십 가격
+      example: 9900
+    billing_key:
+      type: string
+      description: 정기결제용 빌링키
+    auto_renewal:
+      type: boolean
+      default: true
+      description: 자동 갱신 여부
+
+MembershipResponse:
+  type: object
+  properties:
+    membership_id:
+      type: string
+    customer_id:
+      type: string
+    plan:
+      type: string
+    status:
+      type: string
+      enum:
+        - ACTIVE
+        - SUSPENDED
+        - CANCELED
+    started_at:
+      type: string
+      format: date-time
+    next_billing_date:
+      type: string
+      format: date
+    benefits:
+      type: object
+      properties:
+        bonus_points:
+          type: integer
+          description: 가입 시 지급 포인트
+        discount_rate:
+          type: number
+          format: float
+          description: 할인율

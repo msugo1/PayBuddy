@@ -1,0 +1,35 @@
+ErrorResponse:
+  type: object
+  required:
+    - type
+    - title
+    - status
+    - error_code
+  properties:
+    type:
+      type: string
+      format: uri
+      description: Problem type URI (stable identifier)
+    title:
+      type: string
+      description: Short, human-readable summary
+    status:
+      type: integer
+      description: HTTP status code
+    detail:
+      type: string
+      description: Human-readable explanation (safe to show only when allowed)
+    instance:
+      type: string
+      format: uri-reference
+      description: A URI reference that identifies the specific occurrence
+    error_code:
+      type: string
+      description: Stable, machine-readable identifier that categorizes the error beyond the HTTP status code
+    errors:
+      type: object
+      description: Field-level validation errors (field name to list of messages)
+      additionalProperties:
+        type: array
+        items:
+          type: string

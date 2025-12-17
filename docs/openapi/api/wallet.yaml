@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: PayBuddy Wallet API
+  version: 1.0.0
+  description: |
+    PayBuddy 지갑 도메인 API
+
+    - 포인트 충전 및 조회
+    - 멤버십 가입 및 관리
+  contact:
+    name: PayBuddy API Support
+    email: api@paybuddy.com
+
+servers:
+  - url: https://api.paybuddy.com/v1
+    description: Production
+  - url: https://sandbox-api.paybuddy.com/v1
+    description: Sandbox
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Wallet
+    description: 포인트/지갑 기반 결제
+
+paths:
+  /points/topup:
+    post:
+      tags:
+        - Wallet
+      summary: 포인트 충전
+      description: |-
+        빌링키로 선불 포인트를 충전합니다.
+        - 빌링키 필수
+      operationId: topupPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/wallet.yaml#/TopupPointsRequest'
+      responses:
+        '200':
+          description: 충전 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/wallet.yaml#/PointsResponse'
+  /points:
+    get:
+      tags:
+        - Wallet
+      summary: 포인트 잔액 조회
+      operationId: getPoints
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/wallet.yaml#/PointsBalanceResponse'
+  /membership/join:
+    post:
+      tags:
+        - Wallet
+      summary: 멤버십 가입
+      description: |-
+        멤버십에 가입하고 정기결제를 등록합니다.
+        - 빌링키 기반 자동 결제
+        - 가입 시 포인트 지급
+      operationId: joinMembership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/wallet.yaml#/JoinMembershipRequest'
+      responses:
+        '200':
+          description: 가입 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/wallet.yaml#/MembershipResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 가맹점 API Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰 (내부 서비스용)

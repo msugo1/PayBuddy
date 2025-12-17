@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: PayBuddy Settlement API
+  version: 1.0.0
+  description: |
+    PayBuddy 정산 도메인 API
+
+    - 정산 내역 조회
+    - 수수료 내역
+  contact:
+    name: PayBuddy API Support
+    email: api@paybuddy.com
+
+servers:
+  - url: https://api.paybuddy.com/v1
+    description: Production
+  - url: https://sandbox-api.paybuddy.com/v1
+    description: Sandbox
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Settlements
+    description: 정산 조회
+
+paths:
+  /settlements:
+    get:
+      tags:
+        - Settlements
+      summary: 정산 내역 조회
+      description: |-
+        가맹점의 정산 내역을 조회합니다.
+        - 예정 정산
+        - 완료 정산
+        - 수수료 내역
+      operationId: getSettlements
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 조회 시작일 (YYYY-MM-DD)
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 조회 종료일 (YYYY-MM-DD)
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - COMPLETED
+              - FAILED
+          description: 정산 상태
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/settlement.yaml#/SettlementsResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 가맹점 API Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰 (내부 서비스용)

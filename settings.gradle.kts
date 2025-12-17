@@ -1,1 +1,3 @@
-rootProject.name = "payment"
+rootProject.name = "paybuddy"
+
+include("payment")

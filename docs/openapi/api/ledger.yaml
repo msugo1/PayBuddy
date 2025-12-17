@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: PayBuddy Ledger API
+  version: 1.0.0
+  description: |
+    PayBuddy 원장 도메인 API (내부 API)
+
+    - 원장 조회
+    - 원장 기록
+    - Append-only 불변 기록
+  contact:
+    name: PayBuddy API Support
+    email: api@paybuddy.com
+
+servers:
+  - url: https://api.paybuddy.com/v1
+    description: Production
+  - url: https://sandbox-api.paybuddy.com/v1
+    description: Sandbox
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Ledgers
+    description: 원장 조회 (내부 API)
+
+paths:
+  /ledgers:
+    get:
+      tags:
+        - Ledgers
+      summary: 원장 조회
+      description: |-
+        가맹점의 원장 내역을 조회합니다.
+        - 결제 승인
+        - 취소
+        - 정산
+        - 수수료
+      operationId: getLedgers
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - PAYMENT
+              - CANCEL
+              - SETTLEMENT
+              - FEE
+              - CHARGEBACK
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ledger.yaml#/LedgersResponse'
+    post:
+      tags:
+        - Ledgers
+      summary: 원장 기록 (내부 API)
+      description: |-
+        결제 이벤트를 원장에 기록합니다.
+        - Append-only
+        - 불변 기록
+      operationId: createLedgerRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/ledger.yaml#/CreateLedgerRecordRequest'
+      responses:
+        '201':
+          description: 기록 성공
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ledger.yaml#/LedgerRecordResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 가맹점 API Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰 (내부 서비스용)

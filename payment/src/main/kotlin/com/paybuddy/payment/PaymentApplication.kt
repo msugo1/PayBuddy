@@ -1,4 +1,4 @@
-package co.paybuddy.payment
+package com.paybuddy.payment
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
