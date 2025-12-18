@@ -183,13 +183,14 @@ PaymentMethod:
   properties:
     type:
       type: string
-      enum:
-        - CARD
-        - VIRTUAL_ACCOUNT
-        - TRANSFER
-        - PHONE
-        - GIFT_CARD
-      description: 결제수단 타입
+      description: |-
+        결제수단 타입
+        - CARD: 카드 결제
+        - VIRTUAL_ACCOUNT: 가상계좌
+        - TRANSFER: 계좌이체
+        - PHONE: 휴대폰 결제
+        - GIFT_CARD: 상품권
+      example: CARD
     card:
       $ref: '#/CardPaymentMethod'
     virtual_account:
@@ -202,6 +203,8 @@ CardPaymentMethod:
     - expiry_month
     - expiry_year
     - cvc
+    - card_holder_name
+    - installment_months
   properties:
     card_number:
       type: string
@@ -218,28 +221,24 @@ CardPaymentMethod:
       example: '123'
     card_holder_name:
       type: string
+      description: 카드 소유자명
       example: 홍길동
     installment_months:
       type: integer
       description: 할부 개월 수 (0=일시불)
-      default: 0
       example: 0
     card_point_amount:
       type: integer
       minimum: 0
-      description: (선택) 카드사 포인트 사용 요청 금액(희망값). 0 또는 미전달이면 미사용. 최종 적용 금액은 발급사 정책으로 결정될 수 있습니다.
+      description: 카드사 포인트 사용 금액. 0 또는 미전달 시 미사용.
       example: 10000
-    card_point_applied_amount:
-      type: integer
-      minimum: 0
-      description: (선택) 카드사에서 실제로 적용한 포인트 금액. 제공 가능한 연동에서만 내려갑니다.
-      example: 8000
 
 VirtualAccountPaymentMethod:
   type: object
   required:
     - bank_code
     - expiry_date
+    - depositor_name
   properties:
     bank_code:
       type: string
