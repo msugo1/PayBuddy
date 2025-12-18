@@ -1,12 +1,19 @@
 package com.paybuddy.payment.api
 
+import com.paybuddy.payment.api.model.MerchantInfo
 import com.paybuddy.payment.api.model.NextActionNone
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
-import com.paybuddy.payment.api.model.PaymentDetailResponse
 import com.paybuddy.payment.api.model.PaymentReadyRequest
 import com.paybuddy.payment.api.model.PaymentReadyResponse
+import com.paybuddy.payment.api.model.PaymentResponse
+import com.paybuddy.payment.api.model.PaymentResponseFees
+import com.paybuddy.payment.api.model.PaymentResponsePaymentMethod
+import com.paybuddy.payment.api.model.PaymentResponsePaymentMethodCard
 import com.paybuddy.payment.api.model.ReceiptResponse
+import com.paybuddy.payment.api.model.ReceiptResponseMerchant
+import com.paybuddy.payment.api.model.ReceiptResponseOrder
+import com.paybuddy.payment.api.model.ReceiptResponsePayment
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -37,15 +44,84 @@ class PaymentsApiController : PaymentsApi {
 
     private val idempotencyStorage = mutableMapOf<String, String>()
 
-    override fun getPayment(paymentKey: String): ResponseEntity<PaymentDetailResponse> {
-        TODO("Not yet implemented")
+    override fun getPayment(paymentKey: String): ResponseEntity<PaymentResponse> {
+        val response = PaymentResponse()
+            .paymentId("pay_1234567890")
+            .paymentKey(paymentKey)
+            .orderId("order-20251218-001")
+            .status("CAPTURED")
+            .requestedAt(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(10))
+            .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
+            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/$paymentKey/receipt"))
+            .totalAmount(50000)
+            .supplyAmount(45455)
+            .vatAmount(4545)
+            .merchant(
+                MerchantInfo()
+                    .merchantId("mch_1234567890")
+                    .merchantName("스타벅스 강남점")
+                    .businessNumber("123-45-67890")
+                    .mccCode("5814")
+            )
+            .paymentMethod(
+                PaymentResponsePaymentMethod()
+                    .type("CARD")
+                    .card(
+                        PaymentResponsePaymentMethodCard()
+                            .issuer("신한카드")
+                            .acquirer("KB국민카드")
+                            .cardNumber("1234-56**-****-7890")
+                            .cardType("CREDIT")
+                            .approvalNumber("12345678")
+                    )
+            )
+            .fees(
+                PaymentResponseFees()
+                    .pgFee(1500)
+                    .cardFee(1000)
+                    .totalFee(2500)
+                    .settlementAmount(47500)
+            )
+
+        return ResponseEntity.ok(response)
     }
 
     override fun getPaymentReceipt(
         paymentKey: String,
         format: String
     ): ResponseEntity<ReceiptResponse> {
-        TODO("Not yet implemented")
+        val response = ReceiptResponse()
+            .receiptId("receipt_12345")
+            .issuedAt(OffsetDateTime.now(ZoneOffset.UTC))
+            .merchant(
+                ReceiptResponseMerchant()
+                    .name("스타벅스 강남점")
+                    .businessNumber("123-45-67890")
+                    .representative("홍길동")
+                    .address("서울시 강남구 테헤란로 123")
+                    .tel("02-1234-5678")
+            )
+            .order(
+                ReceiptResponseOrder()
+                    .orderId("order-20251218-001")
+                    .orderName("아메리카노 외 2건")
+                    .orderedAt(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5))
+            )
+            .payment(
+                ReceiptResponsePayment()
+                    .method("신한카드")
+                    .cardNumber("1234-56**-****-****")
+                    .installment("일시불")
+                    .approvalNumber("12345678")
+                    .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
+            )
+            .printUrl(URI.create("https://api.paybuddy.com/receipts/receipt_12345/print"))
+            .pdfUrl(URI.create("https://api.paybuddy.com/receipts/receipt_12345/pdf"))
+            .totalAmount(15000)
+            .supplyAmount(13636)
+            .vatAmount(1364)
+
+        return ResponseEntity.ok(response)
     }
 
     override fun readyPayment(
