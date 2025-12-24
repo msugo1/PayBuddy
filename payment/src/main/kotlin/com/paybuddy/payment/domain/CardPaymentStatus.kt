@@ -34,18 +34,25 @@ enum class CardPaymentStatus {
      */
     REFUNDED;
 
-    /**
-     * 주어진 상태로 전이 가능한지 검증
-     *
-     * @param newStatus 전이하려는 새로운 상태
-     * @return 전이 가능 여부
-     */
-    fun canTransitionTo(newStatus: CardPaymentStatus): Boolean {
-        return when (this) {
-            IN_PROGRESS -> newStatus in setOf(AUTHORIZED, CAPTURED, FAILED)
-            AUTHORIZED -> newStatus in setOf(CAPTURED, VOIDED)
-            CAPTURED -> newStatus == REFUNDED
-            else -> false
+    companion object {
+        private val allowedTransitions = setOf(
+            IN_PROGRESS to AUTHORIZED,
+            IN_PROGRESS to CAPTURED,
+            IN_PROGRESS to FAILED,
+            AUTHORIZED to CAPTURED,
+            AUTHORIZED to VOIDED,
+            CAPTURED to REFUNDED
+        )
+
+        /**
+         * 주어진 상태 전이가 허용되는지 검증
+         *
+         * @param from 현재 상태
+         * @param to 전이하려는 상태
+         * @return 전이 가능 여부
+         */
+        fun canTransition(from: CardPaymentStatus, to: CardPaymentStatus): Boolean {
+            return (from to to) in allowedTransitions
         }
     }
 }
