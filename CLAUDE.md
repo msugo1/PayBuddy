@@ -8,6 +8,11 @@
 - task 시작 전: 복잡하면 subtask 분할 (`expand --id=<id> --research`)
 - commit: subtask 없으면 task당 1개, 있으면 subtask당 1개
 
+## 커밋 메시지
+- **Conventional Commit 준수**: `type: 제목`
+- **간결하게**: 설명 필요한 경우만 body 작성
+- **types**: feat, fix, docs, refactor, test, chore
+
 ## 단위 테스트 가이드
 
 ### 테스트 범위
