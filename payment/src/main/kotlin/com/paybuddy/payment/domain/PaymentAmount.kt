@@ -1,6 +1,6 @@
 package com.paybuddy.payment.domain
 
-import com.paybuddy.payment.policy.PaymentPolicy
+import com.paybuddy.payment.domain.PaymentPolicy
 
 /**
  * 결제 금액
