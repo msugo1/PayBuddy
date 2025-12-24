@@ -7,6 +7,8 @@ import java.time.OffsetDateTime
  *
  * 결제 준비 시 생성되며 expireAt까지 유효하다.
  * merchantId + orderId로 중복 요청을 방지한다.
+ *
+ * PaymentSessionFactory를 통해 생성한다.
  */
 class PaymentSession(
     val id: Long = 0,

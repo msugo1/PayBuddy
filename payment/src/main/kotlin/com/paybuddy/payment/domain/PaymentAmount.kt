@@ -1,7 +1,5 @@
 package com.paybuddy.payment.domain
 
-import com.paybuddy.payment.domain.PaymentPolicy
-
 /**
  * 결제 금액
  *
@@ -15,9 +13,6 @@ data class PaymentAmount(
     val vat: Long
 ) {
     init {
-        require(total >= PaymentPolicy.MIN_PAYMENT_AMOUNT) {
-            "Payment amount must be at least ${PaymentPolicy.MIN_PAYMENT_AMOUNT}"
-        }
         require(supply >= 0) { "Supply amount cannot be negative" }
         require(vat >= 0) { "VAT amount cannot be negative" }
         require(supply + vat == total) { "Supply + VAT must equal total amount" }
