@@ -3,24 +3,23 @@ package com.paybuddy.payment
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
 import com.paybuddy.payment.domain.PaymentKeyGenerator
-import com.paybuddy.payment.domain.PaymentPolicy
-import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.PaymentSessionConflictException
 import com.paybuddy.payment.domain.PaymentSessionExpiredException
 import com.paybuddy.payment.domain.PaymentSessionRepository
-import com.paybuddy.payment.domain.RedirectUrl
-import java.time.OffsetDateTime
 
 class PaymentSessionService(
     private val paymentSessionRepository: PaymentSessionRepository,
     private val paymentKeyGenerator: PaymentKeyGenerator,
+    private val paymentSessionFactory: PaymentSessionFactory,
     private val checkoutBaseUrl: String,
 ) {
     fun prepare(
         merchantId: String,
         orderId: String,
         orderLine: OrderLine,
-        amount: PaymentAmount,
+        totalAmount: Long,
+        supplyAmount: Long,
+        vatAmount: Long,
         successUrl: String,
         failUrl: String
     ): PreparedPaymentSession {
@@ -33,14 +32,16 @@ class PaymentSessionService(
             val newPaymentKey = paymentKeyGenerator.generate()
 
             val newPaymentSession = paymentSessionRepository.save(
-                PaymentSession(
+                paymentSessionFactory.create(
                     paymentKey = newPaymentKey,
                     merchantId = merchantId,
                     orderId = orderId,
                     orderLine = orderLine,
-                    amount = amount,
-                    expiresAt = OffsetDateTime.now().plusMinutes(PaymentPolicy.DEFAULT_EXPIRE_MINUTES),
-                    redirectUrl = RedirectUrl(successUrl, failUrl),
+                    totalAmount = totalAmount,
+                    supplyAmount = supplyAmount,
+                    vatAmount = vatAmount,
+                    successUrl = successUrl,
+                    failUrl = failUrl
                 )
             )
 
@@ -57,7 +58,13 @@ class PaymentSessionService(
             throw PaymentSessionExpiredException()
         }
 
-        if (ongoingPaymentSession.isIdenticalPayment(merchantId, orderId, amount).not()) {
+        val requestedAmount = PaymentAmount(
+            total = totalAmount,
+            supply = supplyAmount,
+            vat = vatAmount
+        )
+
+        if (ongoingPaymentSession.isIdenticalPayment(merchantId, orderId, requestedAmount).not()) {
             throw PaymentSessionConflictException()
         }
 
