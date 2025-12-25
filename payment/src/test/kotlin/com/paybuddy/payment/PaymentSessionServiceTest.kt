@@ -8,13 +8,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 
-/*
-    TODO:
-     - 정책관련 테스트
-     - SessionService 응답수정
-     - fixture 테스트
-
- */
 @DisplayName("PaymentSessionService")
 class PaymentSessionServiceTest {
 
@@ -22,8 +15,11 @@ class PaymentSessionServiceTest {
     private lateinit var paymentKeyGenerator: PaymentKeyGenerator
     private lateinit var paymentSessionFactory: PaymentSessionFactory
     private lateinit var paymentSessionService: PaymentSessionService
+    private lateinit var paymentPolicy: PaymentPolicy
 
     private val checkoutBaseUrl = "https://checkout.paybuddy.com"
+    private val defaultCurrentTime = OffsetDateTime.now()
+    private lateinit var expiresAt: OffsetDateTime
 
     @BeforeEach
     fun setUp() {
@@ -36,6 +32,9 @@ class PaymentSessionServiceTest {
             paymentSessionFactory = paymentSessionFactory,
             checkoutBaseUrl = checkoutBaseUrl
         )
+        paymentPolicy = DefaultPaymentPolicy()
+        expiresAt = defaultCurrentTime
+            .plusMinutes(paymentPolicy.defaultExpireMinutes)
     }
 
     @Test
@@ -45,15 +44,16 @@ class PaymentSessionServiceTest {
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
         val ongoingPaymentSession = paymentSessionRepository.findOngoingPaymentSession(merchantId, orderId)
+        val paymentAmount = paymentPolicy.minPaymentAmount
 
         // When
         val result = paymentSessionService.prepare(
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
-            totalAmount = 10000,
-            supplyAmount = 9091,
-            vatAmount = 909,
+            totalAmount = paymentAmount,
+            supplyAmount = paymentAmount,
+            vatAmount = 0,
             successUrl = "https://success.com",
             failUrl = "https://fail.com"
         )
@@ -75,13 +75,15 @@ class PaymentSessionServiceTest {
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
+        val amount = PaymentAmount(total = 10000, supply = 9091, vat = 909)
 
         val expiredPaymentSession = createPaymentSession(
             paymentKey = "pay_expired",
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
-            expiresAt = OffsetDateTime.now().minusSeconds(1)
+            amount = amount,
+            expiresAt = defaultCurrentTime
         )
 
         paymentSessionRepository.save(expiredPaymentSession)
@@ -111,12 +113,15 @@ class PaymentSessionServiceTest {
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
+        val amount = PaymentAmount(total = 10000, supply = 9091, vat = 909)
 
         val existingSession = createPaymentSession(
             paymentKey = "pay_existing",
             merchantId = merchantId,
             orderId = orderId,
-            orderLine = orderLine
+            orderLine = orderLine,
+            amount = amount,
+            expiresAt = expiresAt
         )
         paymentSessionRepository.save(existingSession)
 
@@ -155,13 +160,16 @@ class PaymentSessionServiceTest {
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
+        val paymentAmount = paymentPolicy.minPaymentAmount
+        val amount = PaymentAmount(total = paymentAmount, supply = paymentAmount, vat = 0)
 
         val existingSession = createPaymentSession(
             paymentKey = "pay_existing",
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
-            expiresAt = OffsetDateTime.now().plusMinutes(10)
+            amount = amount,
+            expiresAt = expiresAt
         )
         paymentSessionRepository.save(existingSession)
 
@@ -170,9 +178,9 @@ class PaymentSessionServiceTest {
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
-            totalAmount = 10000,
-            supplyAmount = 9091,
-            vatAmount = 909,
+            totalAmount = paymentAmount,
+            supplyAmount = paymentAmount,
+            vatAmount = 0,
             successUrl = "https://success.com",
             failUrl = "https://fail.com"
         )
@@ -187,14 +195,19 @@ class PaymentSessionServiceTest {
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
+        val amount = PaymentAmount(total = 10000, supply = 9091, vat = 909)
 
         val expiredSession = createPaymentSession(
             paymentKey = "pay_old_expired",
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
-            expiresAt = OffsetDateTime.now().minusMinutes(1)
-        ).apply { expire() }
+            amount = amount,
+            expiresAt = defaultCurrentTime
+        ).apply {
+            expire()
+        }
+
         paymentSessionRepository.save(expiredSession)
 
         // When
@@ -218,11 +231,12 @@ class PaymentSessionServiceTest {
     }
 
     @Test
-    fun `정책 위반 시 예외가 전파된다`() {
+    fun `최소 결제금액보다 적은 금액으로 결제 세션을 요청하면 결제세션 준비에 실패한다`() {
         // Given
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
+        val paymentAmount = paymentPolicy.minPaymentAmount - 1
 
         // When & Then
         assertThatThrownBy {
@@ -230,9 +244,9 @@ class PaymentSessionServiceTest {
                 merchantId = merchantId,
                 orderId = orderId,
                 orderLine = orderLine,
-                totalAmount = 999,
-                supplyAmount = 900,
-                vatAmount = 99,
+                totalAmount = paymentAmount,
+                supplyAmount = paymentAmount,
+                vatAmount = 0,
                 successUrl = "https://success.com",
                 failUrl = "https://fail.com"
             )
@@ -240,12 +254,13 @@ class PaymentSessionServiceTest {
     }
 
     private fun createPaymentSession(
-        paymentKey: String = "pay_test",
-        merchantId: String = "mch_test",
-        orderId: String = "order_test",
-        orderLine: OrderLine = DEFAULT_ORDER_LINE,
-        amount: PaymentAmount = PaymentAmount(total = 10000, supply = 9091, vat = 909),
-        expiresAt: OffsetDateTime = OffsetDateTime.now().plusMinutes(15)
+        paymentKey: String,
+        merchantId: String,
+        orderId: String,
+        orderLine: OrderLine,
+        amount: PaymentAmount,
+        expiresAt: OffsetDateTime,
+        redirectUrl: RedirectUrl = RedirectUrl("https://success.com", "https://fail.com")
     ): PaymentSession {
         return PaymentSession(
             paymentKey = paymentKey,
@@ -254,7 +269,7 @@ class PaymentSessionServiceTest {
             orderLine = orderLine,
             amount = amount,
             expiresAt = expiresAt,
-            redirectUrl = RedirectUrl(success = "https://success.com", fail = "https://fail.com")
+            redirectUrl = redirectUrl
         )
     }
 }
