@@ -17,7 +17,6 @@ class PaymentSessionServiceTest {
     private lateinit var paymentSessionService: PaymentSessionService
     private lateinit var paymentPolicy: PaymentPolicy
 
-    private val checkoutBaseUrl = "https://checkout.paybuddy.com"
     private val defaultCurrentTime = OffsetDateTime.now()
     private lateinit var expiresAt: OffsetDateTime
 
@@ -30,7 +29,6 @@ class PaymentSessionServiceTest {
             paymentSessionRepository = paymentSessionRepository,
             paymentKeyGenerator = paymentKeyGenerator,
             paymentSessionFactory = paymentSessionFactory,
-            checkoutBaseUrl = checkoutBaseUrl
         )
         paymentPolicy = DefaultPaymentPolicy()
         expiresAt = defaultCurrentTime
@@ -45,6 +43,8 @@ class PaymentSessionServiceTest {
         val orderLine = DEFAULT_ORDER_LINE
         val ongoingPaymentSession = paymentSessionRepository.findOngoingPaymentSession(merchantId, orderId)
         val paymentAmount = paymentPolicy.minPaymentAmount
+        val successUrl = "https://success.com"
+        val failUrl = "https://fail.com"
 
         // When
         val result = paymentSessionService.prepare(
@@ -54,15 +54,23 @@ class PaymentSessionServiceTest {
             totalAmount = paymentAmount,
             supplyAmount = paymentAmount,
             vatAmount = 0,
-            successUrl = "https://success.com",
-            failUrl = "https://fail.com"
+            successUrl = successUrl,
+            failUrl = failUrl
         )
 
         // Then
         assertThat(ongoingPaymentSession).isNull()
 
         assertThat(result.paymentKey).isEqualTo("pay_key_1")
-        assertThat(result.checkoutUrl).isEqualTo("$checkoutBaseUrl/checkout?key=pay_key_1")
+        assertThat(result.merchantId).isEqualTo(merchantId)
+        assertThat(result.orderId).isEqualTo(orderId)
+        assertThat(result.orderLine).isEqualTo(orderLine)
+        assertThat(result.amount).isEqualTo(PaymentAmount(paymentAmount, paymentAmount, 0))
+        assertThat(result.expiresAt)
+            .isAfter(defaultCurrentTime)
+            .isBefore(defaultCurrentTime.plusMinutes(paymentPolicy.defaultExpireMinutes + 1))
+        assertThat(result.redirectUrl).isEqualTo(RedirectUrl(successUrl, failUrl))
+        assertThat(result.expired).isFalse()
 
         val savedSession = paymentSessionRepository.findByKey(merchantId, orderId)
         assertThat(savedSession).isNotNull
@@ -162,6 +170,9 @@ class PaymentSessionServiceTest {
         val orderLine = DEFAULT_ORDER_LINE
         val paymentAmount = paymentPolicy.minPaymentAmount
         val amount = PaymentAmount(total = paymentAmount, supply = paymentAmount, vat = 0)
+        val successUrl = "https://success.com"
+        val failUrl = "https://fail.com"
+        val redirectUrl = RedirectUrl(successUrl, failUrl)
 
         val existingSession = createPaymentSession(
             paymentKey = "pay_existing",
@@ -169,7 +180,8 @@ class PaymentSessionServiceTest {
             orderId = orderId,
             orderLine = orderLine,
             amount = amount,
-            expiresAt = expiresAt
+            expiresAt = expiresAt,
+            redirectUrl = redirectUrl
         )
         paymentSessionRepository.save(existingSession)
 
@@ -181,12 +193,19 @@ class PaymentSessionServiceTest {
             totalAmount = paymentAmount,
             supplyAmount = paymentAmount,
             vatAmount = 0,
-            successUrl = "https://success.com",
-            failUrl = "https://fail.com"
+            successUrl = successUrl,
+            failUrl = failUrl
         )
 
         // Then
         assertThat(result.paymentKey).isEqualTo("pay_existing")
+        assertThat(result.merchantId).isEqualTo(merchantId)
+        assertThat(result.orderId).isEqualTo(orderId)
+        assertThat(result.orderLine).isEqualTo(orderLine)
+        assertThat(result.amount).isEqualTo(amount)
+        assertThat(result.expiresAt).isEqualTo(expiresAt)
+        assertThat(result.redirectUrl).isEqualTo(redirectUrl)
+        assertThat(result.expired).isFalse()
     }
 
     @Test
@@ -196,6 +215,8 @@ class PaymentSessionServiceTest {
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
         val amount = PaymentAmount(total = 10000, supply = 9091, vat = 909)
+        val successUrl = "https://success.com"
+        val failUrl = "https://fail.com"
 
         val expiredSession = createPaymentSession(
             paymentKey = "pay_old_expired",
@@ -218,13 +239,22 @@ class PaymentSessionServiceTest {
             totalAmount = 10000,
             supplyAmount = 9091,
             vatAmount = 909,
-            successUrl = "https://success.com",
-            failUrl = "https://fail.com"
+            successUrl = successUrl,
+            failUrl = failUrl
         )
 
         // Then
         assertThat(result.paymentKey).isNotEqualTo("pay_old_expired")
         assertThat(result.paymentKey).isEqualTo("pay_key_1")
+        assertThat(result.merchantId).isEqualTo(merchantId)
+        assertThat(result.orderId).isEqualTo(orderId)
+        assertThat(result.orderLine).isEqualTo(orderLine)
+        assertThat(result.amount).isEqualTo(amount)
+        assertThat(result.expiresAt)
+            .isAfter(defaultCurrentTime)
+            .isBefore(defaultCurrentTime.plusMinutes(paymentPolicy.defaultExpireMinutes + 1))
+        assertThat(result.redirectUrl).isEqualTo(RedirectUrl(successUrl, failUrl))
+        assertThat(result.expired).isFalse()
 
         val newSession = paymentSessionRepository.findByKey(merchantId, orderId)
         assertThat(newSession?.paymentKey).isEqualTo("pay_key_1")
