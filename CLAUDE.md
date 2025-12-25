@@ -63,40 +63,26 @@
 ### 원칙
 - **코드로 표현 가능하면 주석 쓰지 마라** (변수명/함수명으로 해결)
 - **What이 아닌 Why를 설명**
-- **자명한 KDoc 태그 생략** (@param id, @property name 등)
+- **자명한 KDoc 주석 생략** (단순 클래스명 번역, @param id, @property name 등)
 
-### ❌ 작성 금지
-- 코드 중복: `// i에 1을 더한다`
-- 번역 수준: `@property id 아이디`
-- 나쁜 코드 변명: `// 복잡하지만 어쩔 수 없음`
+### ❌ 금지
+- @property, 번역, 클래스명 설명
+- What 나열 (`/** 검증 및 계산 담당 */` ← 코드 보면 앎)
 
-### ✅ 작성 권장
-- **Why**: 왜 이렇게 구현했는지 (성능, 제약사항)
-- **도메인 규칙**: 비즈니스 규칙, 법적 제약, 외부 스펙
-- **복잡한 패턴**: 정규식, 형식 등은 예시 포함
-- **출처**: 복사한 코드, 참조 링크
-- **TODO**: 미완성/기술부채 표시
+### ✅ 작성
+- **Why&도메인 규칙**: 코드로 설명되지 않는 중요한 부분(ex. 비즈니스 규칙, 법적 제약, 외부 스펙)
+- **향후계획**: 왜 추상화했는지, 확장 방향
+- **TODO**: 기술부채, 설계 고민
 
 ### 예시
 ```kotlin
 // ❌
-/**
- * @property id 아이디
- */
-val id: Long
+@property total 총 금액
+/** 정책 검증 및 만료시간 계산 담당 */ class Factory  // What 나열
 
 // ✅
-fun add(item: Item) {
-    list.add(item)
-    // 정렬 유지 - isInStock()에서 이진 검색 사용 (성능 최적화)
-    Collections.sort(list)
-}
-
-/**
- * 신용점수 기반 대출심사 규칙
- *
- * 금융감독원 가이드라인(2023.05)에 따라
- * 대출상품별 신용점수 구간 검증 필수
- */
-class CreditScoreRule
+/** 같은 주문 재시도 시 금액 변조 확인 */ fun isIdenticalPayment()  // Why
+/** merchantId + orderId로 중복 요청 방지 */ class PaymentSession  // 도메인 규칙
+/** 향후 상점별 차등 정책 확장 예정 */ interface PaymentPolicy  // 확장 계획
+// TODO: validation 위치 - API vs Domain 불변성 보장  // 기술부채
 ```

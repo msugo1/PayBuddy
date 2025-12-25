@@ -1,12 +1,5 @@
 package com.paybuddy.payment.domain
 
-/**
- * 결제 금액
- *
- * @property total 총 금액 (원)
- * @property supply 공급가액 (원)
- * @property vat 부가세 (원)
- */
 data class PaymentAmount(
     val total: Long,
     val supply: Long,
