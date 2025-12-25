@@ -1,13 +1,5 @@
 package com.paybuddy.payment.domain
 
-/**
- * 주문 상품 항목
- *
- * @property name 상품명
- * @property quantity 수량
- * @property unitAmount 단가 (원)
- * @property imageUrl 상품 이미지 URL
- */
 data class OrderLineItem(
     val name: String,
     val quantity: Int,

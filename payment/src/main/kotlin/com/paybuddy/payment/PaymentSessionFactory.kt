@@ -7,11 +7,6 @@ import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.RedirectUrl
 import java.time.OffsetDateTime
 
-/**
- * PaymentSession 생성 팩토리
- *
- * 정책 검증 및 만료시간 계산을 담당
- */
 class PaymentSessionFactory(
     private val paymentPolicy: PaymentPolicy
 ) {

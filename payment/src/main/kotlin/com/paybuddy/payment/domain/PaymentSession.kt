@@ -3,8 +3,6 @@ package com.paybuddy.payment.domain
 import java.time.OffsetDateTime
 
 /**
- * 결제 세션
- *
  * 결제 준비 시 생성되며 expireAt까지 유효하다.
  * merchantId + orderId로 중복 요청을 방지한다.
  *
