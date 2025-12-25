@@ -24,7 +24,7 @@ class PaymentSession(
     var expired: Boolean = false
         private set
 
-    fun hasReachedExpiration(): Boolean = OffsetDateTime.now().isAfter(expiresAt)
+    fun hasReachedExpiration(currentTime: OffsetDateTime): Boolean = currentTime.isAfter(expiresAt)
 
     /**
      * 주문 동일성 검증

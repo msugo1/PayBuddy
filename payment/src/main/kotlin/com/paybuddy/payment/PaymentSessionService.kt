@@ -6,6 +6,7 @@ import com.paybuddy.payment.domain.PaymentKeyGenerator
 import com.paybuddy.payment.domain.PaymentSessionConflictException
 import com.paybuddy.payment.domain.PaymentSessionExpiredException
 import com.paybuddy.payment.domain.PaymentSessionRepository
+import java.time.OffsetDateTime
 
 class PaymentSessionService(
     private val paymentSessionRepository: PaymentSessionRepository,
@@ -52,7 +53,7 @@ class PaymentSessionService(
             )
         }
 
-        if (ongoingPaymentSession.hasReachedExpiration()) {
+        if (ongoingPaymentSession.hasReachedExpiration(OffsetDateTime.now())) {
             ongoingPaymentSession.expire()
             paymentSessionRepository.save(ongoingPaymentSession)
             throw PaymentSessionExpiredException()
