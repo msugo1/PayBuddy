@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { confirmPayment } from '@/lib/api/payments';
-import { ApiError } from '@/lib/api/types';
+import { ApiError, PaymentConfirmResponse } from '@/lib/api/types';
 
 type PaymentStatus = 'loading' | 'success' | 'error';
 
@@ -14,7 +14,7 @@ function SuccessContent() {
 
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [paymentInfo, setPaymentInfo] = useState<any>(null);
+  const [paymentInfo, setPaymentInfo] = useState<PaymentConfirmResponse | null>(null);
 
   useEffect(() => {
     if (!paymentKey) {
