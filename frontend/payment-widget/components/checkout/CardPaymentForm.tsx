@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cardPaymentSchema, CardPaymentFormData } from '@/lib/validation/schemas';
-import { formatCardNumber, cleanCardNumber } from '@/lib/validation/card-validator';
+import { formatCardNumber } from '@/lib/validation/card-validator';
 
 type CardPaymentFormProps = {
   onSubmit: (data: CardPaymentFormData) => void;
@@ -16,15 +16,12 @@ export function CardPaymentForm({ onSubmit, isLoading = false }: CardPaymentForm
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<CardPaymentFormData>({
     resolver: zodResolver(cardPaymentSchema),
     defaultValues: {
       installmentMonths: 0,
     },
   });
-
-  const cardNumber = watch('cardNumber');
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCardNumber(e.target.value);

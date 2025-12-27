@@ -1,16 +1,15 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { CardPaymentForm } from '@/components/checkout/CardPaymentForm';
 import { CardPaymentFormData } from '@/lib/validation/schemas';
 import { submitPaymentMethod } from '@/lib/api/payments';
 import { ApiError } from '@/lib/api/types';
 import { cleanCardNumber } from '@/lib/validation/card-validator';
 
-export default function WidgetPage() {
+function WidgetContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const paymentKey = searchParams.get('paymentKey');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -92,5 +91,13 @@ export default function WidgetPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WidgetPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <WidgetContent />
+    </Suspense>
   );
 }
