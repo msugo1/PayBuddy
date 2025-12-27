@@ -174,7 +174,7 @@ frontend/
 **Git 브랜치**: `feature/<task-id>-<task-name>` (CLAUDE.md 참조)
 
 ### Task 0: 백엔드 API 문서 업데이트 (OpenAPI)
-- **브랜치**: `feature/T0-api-spec-update`
+- **브랜치**: `feature/T0-api-spec-update` (base: `feature/checkout-page`)
 - **SubTasks**:
   - T0.1: `/docs/openapi/api/payment.yaml` - submit 엔드포인트 추가
   - T0.2: `/docs/openapi/api/payment.yaml` - confirm 엔드포인트 수정
@@ -183,10 +183,9 @@ frontend/
 - **테스트 계획**:
   - OpenAPI validator로 스펙 검증
   - Swagger UI로 문서 확인
-- **목표**: 프론트엔드 개발 전 API 스펙 확정
 
 ### Task 1: 프로젝트 셋업
-- **브랜치**: `feature/T1-project-setup`
+- **브랜치**: `feature/T1-project-setup` (base: `feature/T0-api-spec-update`)
 - **SubTasks**:
   - T1.1: merchant-demo 생성
   - T1.2: payment-widget 생성
@@ -195,13 +194,15 @@ frontend/
   - T1.5: MSW 설정
   - T1.6: Vitest/Playwright 설정
 - **테스트 계획**:
-  - `npm run dev` 양쪽 프로젝트 실행 확인
-  - MSW 활성화 확인 (브라우저 콘솔 메시지)
-  - `npm run test` 실행 (빈 테스트라도 통과)
-  - `npm run build` 성공
+  - 양쪽 프로젝트 `npm run dev` 실행 확인
+  - MSW 활성화 확인 (브라우저 콘솔)
+  - `npm run test` 통과
+- **완료 확인**:
+  - [ ] http://localhost:3000, 3001 접속
+  - [ ] 브라우저 콘솔에 MSW 메시지 확인
 
 ### Task 2: 가맹점 데모
-- **브랜치**: `feature/T2-merchant-demo`
+- **브랜치**: `feature/T2-merchant-demo` (base: `feature/T1-project-setup`)
 - **SubTasks**:
   - T2.1: Mock 상품 데이터
   - T2.2: 상품 목록 페이지
@@ -210,13 +211,16 @@ frontend/
   - T2.5: API 클라이언트 구조
   - T2.6: ready API 함수
 - **테스트 계획**:
-  - **단위 테스트**: `lib/api/client.test.ts` (ky 에러 처리), `lib/api/payments.test.ts` (ready 함수, MSW)
-  - **컴포넌트 테스트**: `components/merchant/ProductCard.test.tsx` (렌더링, 클릭)
-  - **수동 검증**: http://localhost:3000/merchant 접속 → 5개 상품 표시, 상세 페이지 이동
-  - **목표 커버리지**: API 클라이언트 90%+
+  - **단위**: `lib/api/client.test.ts`, `lib/api/payments.test.ts`
+  - **컴포넌트**: `components/merchant/ProductCard.test.tsx`
+  - **커버리지**: API 90%+
+- **완료 확인**:
+  - [ ] http://localhost:3000/merchant → 5개 상품 표시
+  - [ ] 상품 클릭 → 상세 페이지 이동
+  - [ ] `npm run test:coverage` → 90%+
 
 ### Task 3: Payment Widget
-- **브랜치**: `feature/T3-payment-widget`
+- **브랜치**: `feature/T3-payment-widget` (base: `feature/T2-merchant-demo`)
 - **SubTasks**:
   - T3.1: Widget 메인 페이지
   - T3.2: Luhn 알고리즘
@@ -227,13 +231,18 @@ frontend/
   - T3.7: submit API 연동
   - T3.8: 컴포넌트 테스트
 - **테스트 계획**:
-  - **단위 테스트**: `lib/validation/card-validator.test.ts` (Luhn 100% 필수 - 유효/무효 카드, edge case), `lib/validation/schemas.test.ts` (Zod)
-  - **컴포넌트 테스트**: `components/checkout/CardPaymentForm.test.tsx` (입력 포맷팅, validation, submit)
-  - **수동 검증**: http://localhost:3001/widget?paymentKey=test → 카드 입력, 포맷팅, Network 탭 submit 확인
-  - **목표 커버리지**: Validation 100%, 컴포넌트 80%+
+  - **단위**: Luhn (100% 필수), Zod 스키마
+  - **컴포넌트**: CardPaymentForm
+  - **커버리지**: Validation 100%, 컴포넌트 80%+
+- **완료 확인**:
+  - [ ] http://localhost:3001/widget?paymentKey=test 접속
+  - [ ] 카드 입력 → 1234-5678-9012-3456 자동 포맷팅
+  - [ ] 잘못된 카드 → 에러 메시지
+  - [ ] Network 탭 submit 호출 확인
+  - [ ] Luhn 커버리지 100%
 
 ### Task 4: successUrl + confirm
-- **브랜치**: `feature/T4-success-url-confirm`
+- **브랜치**: `feature/T4-success-url-confirm` (base: `feature/T3-payment-widget`)
 - **SubTasks**:
   - T4.1: successUrl 페이지 구조
   - T4.2: 쿼리 파라미터 추출
@@ -242,39 +251,102 @@ frontend/
   - T4.5: 로딩/성공/실패 UI
   - T4.6: 테스트
 - **테스트 계획**:
-  - **단위 테스트**: 금액 검증 함수 (요청 === 응답, edge case)
-  - **컴포넌트 테스트**: `app/success/page.test.tsx` (파라미터 추출, 금액 검증, confirm 호출, 성공/실패 UI)
-  - **통합 테스트**: Widget → submit → successUrl → confirm → DONE (MSW)
-  - **수동 검증**: Widget 결제 → successUrl 리다이렉트, Network 탭 confirm 호출, 완료 화면
-  - **목표 커버리지**: successUrl 로직 90%+
+  - **단위**: 금액 검증 함수
+  - **컴포넌트**: `app/success/page.test.tsx`
+  - **통합**: Widget → submit → successUrl → confirm (MSW)
+  - **커버리지**: 90%+
+- **완료 확인**:
+  - [ ] Widget 결제 → successUrl 리다이렉트
+  - [ ] Network 탭 confirm 호출
+  - [ ] 완료 화면 표시
 
-### Task 5: 3DS 인증 (선택)
-- **브랜치**: `feature/T5-3ds-challenge`
+### Task 5: 3DS 인증
+- **브랜치**: `feature/T5-3ds-challenge` (base: `feature/T4-success-url-confirm`)
 - **SubTasks**:
   - T5.1: 3DS 페이지 구조
   - T5.2: ACS iframe 렌더링
   - T5.3: 자동 form submit
   - T5.4: 타임아웃 처리
 - **테스트 계획**:
-  - **컴포넌트 테스트**: `app/3ds/page.test.tsx` (파라미터 추출, iframe 렌더링, form submit, 타임아웃)
-  - **수동 검증**: 고가 상품 (5555555555554444) → submit → 3DS 페이지 → successUrl
-  - **목표 커버리지**: 3DS 페이지 로직 70%+
+  - **컴포넌트**: `app/3ds/page.test.tsx`
+  - **커버리지**: 70%+
+- **완료 확인**:
+  - [ ] 고가 상품 (5555...) → 3DS 페이지 이동
+  - [ ] iframe 렌더링
+  - [ ] 3분 타임아웃 동작
 
 ### Task 6: E2E 테스트
-- **브랜치**: `feature/T6-e2e-tests`
+- **브랜치**: `feature/T6-e2e-tests` (base: `feature/T5-3ds-challenge`)
 - **SubTasks**:
   - T6.1: 카드 결제 (3DS 없음)
   - T6.2: 카드 결제 (3DS 있음)
   - T6.3: 결제 실패
   - T6.4: 금액 검증 실패
 - **테스트 계획**:
-  - **E2E 시나리오**:
-    - `e2e/card-payment-no-3ds.spec.ts`: 상품 선택 → 카드 입력 (4111...) → 결제 완료
-    - `e2e/card-payment-with-3ds.spec.ts`: 고가 상품 → 카드 입력 (5555...) → 3DS → 완료
-    - `e2e/payment-failure.spec.ts`: 잔액 부족 카드 (4000...0002) → 에러 표시
-    - `e2e/amount-validation-failure.spec.ts`: successUrl 금액 변조 → 에러, confirm 호출 안 함
-  - **실행 환경**: MSW, Headless/UI 모드
-  - **검증**: 전체 통과, 스크린샷 캡처, 실행 시간 < 2분
+  - **E2E 시나리오**: 4개 (3DS 없음/있음, 실패, 금액 검증)
+  - **실행**: MSW, Headless/UI 모드
+- **완료 확인**:
+  - [ ] merchant-demo, payment-widget 동시 실행
+  - [ ] `npm run test:e2e` 전체 통과
+  - [ ] 4개 시나리오 모두 구현
+
+---
+
+## Git 브랜치 전략
+
+### ⚠️ 순차적 브랜치 생성 (필수)
+
+Task가 의존 관계이므로 **반드시 직전 브랜치에서 생성**:
+
+```bash
+git checkout feature/T0-api-spec-update
+git checkout -b feature/T1-project-setup  # T0에서 생성 ✅
+
+git checkout feature/T1-project-setup
+git checkout -b feature/T2-merchant-demo  # T1에서 생성 ✅
+```
+
+**PR base도 직전 Task로 설정**:
+```bash
+gh pr create --base feature/T1-project-setup --title "[Task 2] ..."
+```
+
+### ❌ 잘못된 예
+```bash
+# 모든 브랜치를 checkout-page에서 생성 ❌
+git checkout feature/checkout-page
+git checkout -b feature/T2-merchant-demo  # T1 없어서 작업 불가!
+```
+
+---
+
+## 작업 프로세스
+
+### 시작
+1. PRD 해당 Task 섹션 읽기 (SubTask, 테스트 계획, 체크리스트)
+2. 직전 브랜치에서 생성: `git checkout feature/T<이전> && git checkout -b feature/T<현재>`
+
+### 진행
+- SubTask 단위 커밋
+- 코드 작성 후 즉시: `npm run dev` (브라우저 확인) + `npm run build` + `npm run test`
+
+### 완료
+1. 해당 Task의 **완료 체크리스트** 전체 확인
+2. `npm run test:coverage` → 목표 달성 확인
+3. PR 생성 (base는 직전 Task)
+
+---
+
+## Task 공통 완료 체크리스트
+
+모든 Task 완료 전 확인:
+- [ ] 모든 SubTask 코드 완료
+- [ ] PRD 테스트 계획 항목 전부 완료
+- [ ] `npm run dev` → 브라우저 수동 확인 (콘솔 에러 없음)
+- [ ] `npm run test` 전체 통과
+- [ ] `npm run test:coverage` → 목표 달성
+- [ ] `npm run build` 성공
+- [ ] ESLint 경고 없음
 
 ---
 
