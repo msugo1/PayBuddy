@@ -19,6 +19,22 @@ export const handlers = [
     return HttpResponse.json(response, { status: 200 });
   }),
 
+  // POST /payments/confirm
+  http.post(`${API_BASE_URL}/payments/confirm`, async ({ request }) => {
+    const body = await request.json() as { payment_key: string };
+
+    const response = {
+      payment_id: `pm_${Date.now()}`,
+      payment_key: body.payment_key,
+      order_id: 'order-test-123',
+      status: 'DONE',
+      total_amount: 10000,
+      approved_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json(response, { status: 200 });
+  }),
+
   // Error case: 400 Bad Request
   http.post(`${API_BASE_URL}/payments/ready-error`, async () => {
     return HttpResponse.json(
