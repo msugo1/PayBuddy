@@ -112,32 +112,94 @@ paths:
                     instance: '/payments/ready'
                     error_code: 'IDEMPOTENCY_CONFLICT'
 
+  /payments/checkout/submit:
+    post:
+      tags:
+        - Payments
+      summary: 결제수단 제출 및 저장
+      description: |-
+        결제수단을 제출하고 저장합니다. 서버가 3DS 인증 필요 여부를 판단하여 NextAction을 반환합니다.
+
+        **2단계 프로세스 - 1단계: Submit (Authentication)**
+        - 결제수단(카드 정보 등)을 서버에 저장
+        - 3DS 인증 필요 여부 판단
+        - NextAction 반환:
+          - challenge_3ds2: 3DS 인증 필요 → 3DS 페이지로 리다이렉트
+          - none: 3DS 불필요 → successUrl로 리다이렉트
+
+        **보안**:
+        - 카드 정보는 암호화되어 저장
+        - 저장된 정보는 10분간 유효 (결제 세션 만료 시간과 동일)
+
+        **다음 단계**:
+        - 3DS 필요 시: 3DS 인증 완료 → successUrl로 리다이렉트
+        - 3DS 불필요 시: 바로 successUrl로 리다이렉트
+        - successUrl에서 confirm API를 호출하여 최종 승인
+      operationId: submitPaymentMethod
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/payment.yaml#/PaymentSubmitRequest'
+      responses:
+        '200':
+          description: 제출 성공, NextAction 반환
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/payment.yaml#/PaymentSubmitResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+        '401':
+          description: 인증 실패
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+        '422':
+          description: 처리할 수 없는 요청 (카드 검증 실패 등)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+
   /payments/confirm:
     post:
       tags:
         - Payments
-      summary: 결제 진행 (승인/매입확정 통합)
+      summary: 결제 최종 승인
       description: |-
-        결제를 진행합니다. 서버가 현재 상태(status)에 따라 동작을 결정합니다.
+        결제를 최종 승인합니다. submit에서 이미 결제수단이 저장되었으므로, payment_key만으로 승인을 진행합니다.
 
-        - status=INITIALIZED 또는 PENDING: 승인(Authorize)을 수행
-          - 서버 정책에 따라:
-            - AUTHORIZED: 가승인(Preauthorize) 완료 (추후 재호출로 매입확정)
-            - CAPTURED: 승인과 동시에 매입 확정(즉시 결제)
-        - status=AUTHORIZED: 매입 확정(Capture)을 수행 → CAPTURED
+        **2단계 프로세스 - 2단계: Confirm (Authorization)**
+        - submit에서 저장된 결제수단으로 카드사 승인 요청
+        - 실제 결제 처리
+        - 응답 상태:
+          - DONE: 카드 결제 완료
+          - WAITING_FOR_DEPOSIT: 가상계좌 발급 완료 (입금 대기)
 
-        클라이언트는 void/cancel처럼 세부 동작을 선택할 필요가 없으며,
-        동일 엔드포인트 재호출로 흐름을 진행합니다.
+        **호출 시점**:
+        - successUrl에서 금액 검증 후 즉시 호출 (10분 이내 필수)
+        - 10분 초과 시 결제 세션 만료
+
+        **보안**:
+        - successUrl에서 요청 금액과 응답 금액이 일치하는지 검증 필수
+        - 금액 변조 감지 시 confirm 호출하지 않음
       operationId: confirmPayment
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               $ref: '../schemas/payment.yaml#/PaymentConfirmRequest'
       responses:
         '200':
-          description: 진행 결과
+          description: 승인 결과
           content:
             application/json:
               schema:
@@ -155,7 +217,7 @@ paths:
               schema:
                 $ref: '../error.yaml#/ErrorResponse'
         '422':
-          description: 처리할 수 없는 요청
+          description: 처리할 수 없는 요청 (잔액 부족, 세션 만료 등)
           content:
             application/problem+json:
               schema:
