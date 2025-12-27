@@ -1,5 +1,10 @@
 import { apiClient } from './client';
-import { PaymentReadyRequest, PaymentReadyResponse } from './types';
+import {
+  PaymentReadyRequest,
+  PaymentReadyResponse,
+  PaymentConfirmRequest,
+  PaymentConfirmResponse,
+} from './types';
 
 export async function readyPayment(
   request: PaymentReadyRequest,
@@ -13,6 +18,16 @@ export async function readyPayment(
   });
 
   return response.json<PaymentReadyResponse>();
+}
+
+export async function confirmPayment(
+  request: PaymentConfirmRequest,
+): Promise<PaymentConfirmResponse> {
+  const response = await apiClient.post('payments/confirm', {
+    json: request,
+  });
+
+  return response.json<PaymentConfirmResponse>();
 }
 
 export function generateIdempotencyKey(): string {
