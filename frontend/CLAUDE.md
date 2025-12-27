@@ -118,13 +118,29 @@ merchant-demo/ (port 3000)           payment-widget/ (port 3001)
 
 ## Git 브랜치 전략
 
+**⚠️ 순차적 브랜치 생성 필수**
+
+```bash
+# ✅ 올바른 방법
+git checkout feature/T0-api-spec-update
+git checkout -b feature/T1-project-setup
+
+# ❌ 잘못된 방법
+git checkout main  # 또는 base 브랜치
+git checkout -b feature/T2-merchant-demo  # T0, T1 없음
+```
+
+**PR base도 직전 Task**:
+```bash
+gh pr create --base feature/T1-project-setup --title "[Task 2] ..."
+```
+
 **브랜치 네이밍**: `feature/<task-id>-<task-name>`
-- 예: `feature/T1-project-setup`, `feature/T2.1-product-list-page`
 
 **작업 흐름**:
-1. main에서 feature 브랜치 생성
+1. 직전 Task 브랜치에서 새 브랜치 생성
 2. SubTask 단위로 커밋
-3. Task 완료 후 PR → main에 merge
+3. Task 완료 후 PR → 직전 Task 브랜치
 
 ---
 
@@ -150,6 +166,17 @@ fix: correct amount validation in successUrl
 ---
 
 ## 테스트 전략
+
+### 테스트 작성 및 실행 필수
+
+**작성**:
+- PRD.md "테스트 계획"에 명시된 모든 테스트 작성
+- 단위, 컴포넌트, E2E 각각 구현
+
+**실행**:
+- 작성 후 **반드시 실행** (`npm run test`)
+- 실패하는 테스트 커밋 금지
+- 브라우저 수동 확인도 필수
 
 ### 테스트 철학
 **리팩토링에 안전한 테스트** - 구현 세부사항이 아닌 동작 테스트
@@ -206,6 +233,18 @@ fix: correct amount validation in successUrl
 - [ ] ESLint 경고 없음
 - [ ] 브라우저 콘솔 에러 없음
 - [ ] 테스트 커버리지 목표 달성
+
+---
+
+## 문제 해결
+
+**테스트 실패**:
+- 즉시 수정 (커밋 금지)
+- 통과할 때까지 반복
+
+**요구사항 누락**:
+- PRD.md 해당 Task 섹션 재확인
+- "테스트 계획", "완료 확인" 하나씩 체크
 
 ---
 
