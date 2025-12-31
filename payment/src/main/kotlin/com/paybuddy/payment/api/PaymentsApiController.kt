@@ -55,7 +55,7 @@ class PaymentsApiController : PaymentsApi {
         verifyIdempotentRequest(idempotencyKey, paymentReadyRequest)
 
         val response = PaymentReadyResponse(
-            "paybuddy-payment",
+            "01JGQR5K8Y9Z2N4M3X7P6W5V1T",
             "https://payment.paybuddy.com/checkout",
             OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10)
         )
@@ -84,7 +84,7 @@ class PaymentsApiController : PaymentsApi {
         // Mock implementation for contract testing
         val response = PaymentConfirmResponse(
             "pay_1234567890",
-            "pay_test123",
+            "01JGQR5K8Y9Z2N4M3X7P6W5V1T",
             "order-20251210-001",
             "CAPTURED",
             50000,
@@ -93,7 +93,7 @@ class PaymentsApiController : PaymentsApi {
             OffsetDateTime.now(ZoneOffset.UTC)
         )
             .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
-            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/pay_test123/receipt"))
+            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/01JGQR5K8Y9Z2N4M3X7P6W5V1T/receipt"))
             .nextAction(NextActionNone("none"))
 
         return ResponseEntity.ok(response)
