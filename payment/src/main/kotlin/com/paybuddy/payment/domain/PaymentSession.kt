@@ -1,5 +1,8 @@
 package com.paybuddy.payment.domain
 
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import java.time.OffsetDateTime
 
 /**
@@ -8,19 +11,46 @@ import java.time.OffsetDateTime
  *
  * PaymentSessionFactory를 통해 생성한다.
  */
+@Entity
+@Table(name = "payment_session")
 class PaymentSession(
-    val id: Long = 0,
-    val paymentKey: String,
+    @Id
+    @Column(length = 26)
+    val id: String,  // ULID (= 외부 paymentKey)
+
+    @Column(nullable = false)
     val merchantId: String,
+
+    @Column(nullable = false)
     val orderId: String,
+
+    @Type(JsonBinaryType::class)
+    @Column(nullable = false, columnDefinition = "jsonb")
     val orderLine: OrderLine,
+
+    @Embedded
     val amount: PaymentAmount,
+
+    @Column(nullable = false)
     val expiresAt: OffsetDateTime,
+
+    @Embedded
     val redirectUrl: RedirectUrl,
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+
+    @Column(nullable = false, updatable = false)
+    val createdAt: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(nullable = false)
+    var updatedAt: OffsetDateTime = OffsetDateTime.now()
 ) {
+    @Column(nullable = false)
     var expired: Boolean = false
         private set
+
+    @PreUpdate
+    fun preUpdate() {
+        this.updatedAt = OffsetDateTime.now()
+    }
 
     fun hasReachedExpiration(currentTime: OffsetDateTime): Boolean = currentTime.isAfter(expiresAt)
 

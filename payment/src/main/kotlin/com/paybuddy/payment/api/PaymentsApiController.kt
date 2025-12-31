@@ -161,9 +161,10 @@ class PaymentsApiController(
             failUrl = paymentReadyRequest.failUrl.toString()
         )
 
+        val paymentKey = paymentSession.id
         val response = PaymentReadyResponse()
-            .paymentKey(paymentSession.paymentKey)
-            .checkoutUrl("https://payment.paybuddy.com/checkout/${paymentSession.paymentKey}")
+            .paymentKey(paymentKey)
+            .checkoutUrl("https://payment.paybuddy.com/checkout/${paymentKey}")
             .expiresAt(paymentSession.expiresAt)
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response)

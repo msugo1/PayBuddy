@@ -54,7 +54,7 @@ class PaymentSessionFactoryTest {
         )
 
         // Then
-        assertThat(session.paymentKey).isNotBlank()
+        assertThat(session.id).isNotBlank
         assertThat(session.merchantId).isEqualTo(merchantId)
         assertThat(session.orderId).isEqualTo(orderId)
         assertThat(session.orderLine).isEqualTo(orderLine)

@@ -38,7 +38,7 @@ class PaymentSessionFactory(
         val redirectUrl = RedirectUrl(success = successUrl, fail = failUrl)
 
         return PaymentSession(
-            paymentKey = paymentKey,
+            id = paymentKey,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
