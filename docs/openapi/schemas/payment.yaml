@@ -2,10 +2,9 @@
 # NextAction Schemas (결제 진행 시 필요한 추가 액션)
 # ============================================
 NextAction:
-  description: 결제 진행을 위한 다음 단계 액션
+  description: 결제 진행을 위한 다음 단계 액션 (submit 응답용)
   oneOf:
     - $ref: '#/NextAction3DS2Challenge'
-    - $ref: '#/NextActionAwaitDeposit'
     - $ref: '#/NextActionQR'
     - $ref: '#/NextActionPolling'
     - $ref: '#/NextActionRedirect'
@@ -45,43 +44,6 @@ NextAction3DS2Challenge:
         - 04: 600x400
         - 05: Full screen
       example: "02"
-
-NextActionAwaitDeposit:
-  type: object
-  description: 가상계좌 입금 대기
-  required:
-    - type
-    - virtual_account
-  properties:
-    type:
-      type: string
-      example: await_deposit
-    virtual_account:
-      type: object
-      required:
-        - bank_code
-        - bank_name
-        - account_number
-        - expiry_date
-      properties:
-        bank_code:
-          type: string
-          example: "004"
-        bank_name:
-          type: string
-          example: KB국민은행
-        account_number:
-          type: string
-          description: 서버가 생성한 가상계좌 번호
-          example: "12345678901234"
-        depositor_name:
-          type: string
-          nullable: true
-          example: 홍길동
-        expiry_date:
-          type: string
-          format: date-time
-          description: 입금 기한
 
 NextActionQR:
   type: object
@@ -297,18 +259,131 @@ PaymentResponse:
 PaymentStatus:
   type: string
   description: |-
-    결제 상태 (가능한 값 - enum이 아닌 string으로 관리하여 확장성 보장)
-    - INITIALIZED: ready로 결제 세션이 생성됨(아직 승인 전)
-    - PENDING: 결제 대기/처리 중
-    - AUTHORIZED: 가승인(Preauthorize) 완료, 추후 confirm 재호출로 매입 확정 가능
-    - CAPTURED: 매입 확정 완료(즉시 결제 포함)
-    - APPROVED: (레거시) 승인 완료를 의미하며, 본 스펙에서는 CAPTURED와 동일 의미로 취급 가능
-    - FAILED: 실패
-    - VOIDED: 캡처 이전 승인취소(Authorization reversal)
+    결제 전체의 상태
+    - READY: 결제 세션 생성 (ready 후)
+    - IN_PROGRESS: 인증 완료, 승인 대기 (submit 후)
+    - DONE: 결제 완료 (카드 승인 완료 또는 가상계좌 입금 완료)
+    - WAITING_FOR_DEPOSIT: 가상계좌 발급 완료, 입금 대기
     - CANCELED: 전체 취소/환불
     - PARTIAL_CANCELED: 부분 취소/환불
-    - EXPIRED: 세션/가승인 만료
+    - ABORTED: 승인 실패
+    - EXPIRED: 세션/기한 만료
+  enum:
+    - READY
+    - IN_PROGRESS
+    - DONE
+    - WAITING_FOR_DEPOSIT
+    - CANCELED
+    - PARTIAL_CANCELED
+    - ABORTED
+    - EXPIRED
+  example: DONE
+
+# ============================================
+# Payment Method Status Schemas (결제수단별 상태)
+# ============================================
+
+CardStatus:
+  type: string
+  description: |-
+    카드 결제수단의 상태
+    - AUTHORIZED: 가승인 (매입 전)
+    - CAPTURED: 매입 완료
+    - VOIDED: 가승인 취소 (매입 전 취소)
+    - CANCELED: 전액 환불 (매입 후 취소)
+    - PARTIAL_CANCELED: 부분 환불
+    - FAILED: 승인 실패
+  enum:
+    - AUTHORIZED
+    - CAPTURED
+    - VOIDED
+    - CANCELED
+    - PARTIAL_CANCELED
+    - FAILED
   example: CAPTURED
+
+VirtualAccountStatus:
+  type: string
+  description: |-
+    가상계좌 결제수단의 상태
+    - ISSUED: 계좌 발급 완료, 입금 대기
+    - DEPOSITED: 입금 완료
+    - EXPIRED: 입금 기한 만료
+    - CANCELED: 발급 취소
+    - REFUNDED: 전액 환불
+    - PARTIAL_REFUNDED: 부분 환불
+  enum:
+    - ISSUED
+    - DEPOSITED
+    - EXPIRED
+    - CANCELED
+    - REFUNDED
+    - PARTIAL_REFUNDED
+  example: DEPOSITED
+
+# ============================================
+# Payment Method Response Schemas (결제수단 응답용)
+# ============================================
+
+Card:
+  type: object
+  description: 카드 결제 응답 정보
+  properties:
+    status:
+      $ref: '#/CardStatus'
+    issuer:
+      type: string
+      description: 발급사
+      example: 신한카드
+    acquirer:
+      type: string
+      description: 매입사
+      example: 신한카드
+    number:
+      type: string
+      description: 마스킹된 카드번호
+      example: "1234-56**-****-7890"
+    approval_number:
+      type: string
+      description: 승인번호
+      example: "12345678"
+    installment_months:
+      type: integer
+      description: 할부 개월 (0=일시불)
+      example: 0
+
+VirtualAccount:
+  type: object
+  description: 가상계좌 결제 응답 정보
+  properties:
+    status:
+      $ref: '#/VirtualAccountStatus'
+    bank_code:
+      type: string
+      description: 은행 코드
+      example: "004"
+    bank_name:
+      type: string
+      description: 은행명
+      example: KB국민은행
+    account_number:
+      type: string
+      description: 가상계좌 번호
+      example: "12345678901234"
+    depositor_name:
+      type: string
+      nullable: true
+      description: 입금자명
+      example: 홍길동
+    due_date:
+      type: string
+      format: date-time
+      description: 입금 기한
+    deposited_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: 입금 완료 시각
 
 PaymentDetailResponse:
   allOf:
@@ -1228,13 +1303,25 @@ PaymentConfirmRequest:
     결제 최종 승인 요청
     - submit에서 이미 결제수단이 저장되었으므로 payment_key만 전달
     - 서버가 저장된 결제수단으로 카드사 승인 진행
+    - order_id, total_amount로 결제 세션 정보 검증
   required:
     - payment_key
+    - order_id
+    - total_amount
   properties:
     payment_key:
       type: string
       description: 결제 고유키
       example: pay_abc123xyz
+    order_id:
+      type: string
+      description: 주문 ID (검증용)
+      example: order-20251210-001
+    total_amount:
+      type: integer
+      description: 총 결제금액 (검증용 - 결제 세션의 금액과 일치해야 함)
+      example: 50000
+      minimum: 0
 
 PaymentConfirmResponse:
   type: object
@@ -1243,6 +1330,7 @@ PaymentConfirmResponse:
     - payment_key
     - order_id
     - status
+    - payment_method
     - total_amount
     - supply_amount
     - vat_amount
@@ -1259,9 +1347,19 @@ PaymentConfirmResponse:
       type: string
       example: order-20251210-001
     status:
+      $ref: '#/PaymentStatus'
+    payment_method:
       type: string
-      description: 결제 상태 (INITIALIZED, PENDING, AUTHORIZED, CAPTURED, FAILED 등)
-      example: CAPTURED
+      description: 결제수단 타입 (CARD, VIRTUAL_ACCOUNT, TRANSFER, PHONE)
+      example: CARD
+    card:
+      $ref: '#/Card'
+      nullable: true
+      description: 카드 결제 정보 (payment_method가 CARD일 때)
+    virtual_account:
+      $ref: '#/VirtualAccount'
+      nullable: true
+      description: 가상계좌 정보 (payment_method가 VIRTUAL_ACCOUNT일 때)
     total_amount:
       type: integer
       description: 총 결제금액(승인/정산 기준)
@@ -1282,17 +1380,13 @@ PaymentConfirmResponse:
       type: string
       format: date-time
       nullable: true
-      description: 승인 완료 시각 (PENDING 상태에서는 null)
+      description: 승인 완료 시각 (가상계좌는 입금 시점)
     receipt_url:
       type: string
       format: uri
       nullable: true
-      description: 영수증 URL (승인 완료 후 생성, PENDING 상태에서는 null)
+      description: 영수증 URL (승인 완료 후 생성)
       example: https://api.paybuddy.com/v1/payments/pay_abc123xyz/receipt
-    next_action:
-      $ref: '#/NextAction'
-      nullable: true
-      description: 사용자가 수행해야 할 다음 액션 (없으면 완료)
 
 Pagination:
   type: object
