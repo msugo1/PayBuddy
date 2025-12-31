@@ -120,7 +120,7 @@ class JpaPaymentSessionRepositoryTest {
         sut.save(session)
 
         // When
-        val ongoingPaymentSession = sut.findOngoingPaymentSession(merchantId, orderId)
+        val ongoingPaymentSession = sut.findByMerchantIdAndOrderIdAndExpiredFalse(merchantId, orderId)
 
         // Then
         assertThat(ongoingPaymentSession).isNotNull
@@ -150,7 +150,7 @@ class JpaPaymentSessionRepositoryTest {
         sut.save(expiredSession)
 
         // When
-        val entity = sut.findOngoingPaymentSession(merchantId, orderId)
+        val entity = sut.findByMerchantIdAndOrderIdAndExpiredFalse(merchantId, orderId)
 
         // Then
         assertThat(entity).isNull()
