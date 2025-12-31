@@ -1185,24 +1185,56 @@ PaymentReadyResponse:
       format: date-time
       description: 결제 세션 만료 시각 (기본 10분)
 
-PaymentConfirmRequest:
+PaymentSubmitRequest:
   type: object
   description: |-
-    결제 진행(Confirm) API입니다.
-    - INITIALIZED/PENDING 단계: 결제수단에 따라 승인/계좌발급 등 결제 진행을 시작합니다.
-    - AUTHORIZED 단계: (카드 가승인인 경우) 캡처를 수행합니다.
-
-    결제 금액은 ready 단계에서 이미 생성되어 있으므로, confirm 요청에는 결제수단만 전달합니다.
+    결제수단 제출 요청
+    - 카드 정보 등 결제수단을 서버에 저장
+    - 서버가 3DS 인증 필요 여부 판단
   required:
     - payment_key
     - payment_method
   properties:
     payment_key:
       type: string
-      description: 결제 고유키
+      description: 결제 고유키 (ready API에서 받은 값)
       example: pay_abc123xyz
     payment_method:
       $ref: '#/PaymentMethod'
+
+PaymentSubmitResponse:
+  type: object
+  description: |-
+    결제수단 제출 응답
+    - next_action을 통해 다음 단계 안내
+  required:
+    - payment_key
+    - next_action
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+      example: pay_abc123xyz
+    next_action:
+      $ref: '#/NextAction'
+      description: |-
+        사용자가 수행해야 할 다음 액션
+        - challenge_3ds2: 3DS 인증 필요
+        - none: 바로 successUrl로 이동
+
+PaymentConfirmRequest:
+  type: object
+  description: |-
+    결제 최종 승인 요청
+    - submit에서 이미 결제수단이 저장되었으므로 payment_key만 전달
+    - 서버가 저장된 결제수단으로 카드사 승인 진행
+  required:
+    - payment_key
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+      example: pay_abc123xyz
 
 PaymentConfirmResponse:
   type: object
