@@ -30,11 +30,11 @@ class PaymentSessionService(
         )
 
         if (ongoingPaymentSession == null) {
-            val newPaymentKey = paymentKeyGenerator.generate()
+            val newId = paymentKeyGenerator.generate()  // ULID
 
             val newPaymentSession = paymentSessionRepository.save(
                 paymentSessionFactory.create(
-                    paymentKey = newPaymentKey,
+                    id = newId,
                     merchantId = merchantId,
                     orderId = orderId,
                     orderLine = orderLine,

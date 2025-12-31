@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:paybuddy}
+    username: ${POSTGRES_USER:paybuddy}
+    password: ${POSTGRES_PASSWORD:paybuddy}
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+logging:
+  level:
+    com.paybuddy: DEBUG

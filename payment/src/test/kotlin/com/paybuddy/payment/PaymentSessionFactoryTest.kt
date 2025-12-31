@@ -32,7 +32,7 @@ class PaymentSessionFactoryTest {
     @DisplayName("최소 결제 금액 이상이면 결제세션이 생성된다")
     fun `최소 결제 금액 정책을 만족하면 세션이 생성된다`(totalAmount: Long) {
         // Given
-        val paymentKey = "pay_test"
+        val id = "01JGXM9K3V7N2P8Q4R5S6T7U8V"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -41,7 +41,7 @@ class PaymentSessionFactoryTest {
 
         // When
         val session = paymentSessionFactory.create(
-            paymentKey = paymentKey,
+            id = id,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
@@ -53,7 +53,7 @@ class PaymentSessionFactoryTest {
         )
 
         // Then
-        assertThat(session.paymentKey).isEqualTo(paymentKey)
+        assertThat(session.id).isEqualTo(id)
         assertThat(session.merchantId).isEqualTo(merchantId)
         assertThat(session.orderId).isEqualTo(orderId)
         assertThat(session.orderLine).isEqualTo(orderLine)
@@ -74,7 +74,7 @@ class PaymentSessionFactoryTest {
     @DisplayName("최소 결제 금액 미만이면 예외가 발생한다")
     fun `최소 결제 금액 정책을 위반하면 세션 생성이 거부된다`(totalAmount: Long) {
         // Given
-        val paymentKey = "pay_test"
+        val id = "01JGXM9K3V7N2P8Q4R5S6T7U8V"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -84,7 +84,7 @@ class PaymentSessionFactoryTest {
         // When & Then
         assertThatThrownBy {
             paymentSessionFactory.create(
-                paymentKey = paymentKey,
+                id = id,
                 merchantId = merchantId,
                 orderId = orderId,
                 orderLine = orderLine,
@@ -101,7 +101,7 @@ class PaymentSessionFactoryTest {
     @DisplayName("새 결제세션의 만료시간은 정책의 기본 만료시간으로 설정된다")
     fun `생성된 세션의 만료시간은 정책 기본값을 따른다`() {
         // Given
-        val paymentKey = "pay_test"
+        val id = "01JGXM9K3V7N2P8Q4R5S6T7U8V"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -109,7 +109,7 @@ class PaymentSessionFactoryTest {
 
         // When
         val session = paymentSessionFactory.create(
-            paymentKey = paymentKey,
+            id = id,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,

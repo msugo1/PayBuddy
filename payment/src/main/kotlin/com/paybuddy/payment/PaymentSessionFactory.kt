@@ -11,7 +11,7 @@ class PaymentSessionFactory(
     private val paymentPolicy: PaymentPolicy
 ) {
     fun create(
-        paymentKey: String,
+        id: String,  // ULID
         merchantId: String,
         orderId: String,
         orderLine: OrderLine,
@@ -34,7 +34,7 @@ class PaymentSessionFactory(
         val redirectUrl = RedirectUrl(success = successUrl, fail = failUrl)
 
         return PaymentSession(
-            paymentKey = paymentKey,
+            id = id,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,

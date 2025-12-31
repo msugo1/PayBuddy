@@ -1,5 +1,8 @@
 package com.paybuddy.payment.domain
 
+import jakarta.persistence.Embeddable
+
+@Embeddable
 data class PaymentAmount(
     val total: Long,
     val supply: Long,
