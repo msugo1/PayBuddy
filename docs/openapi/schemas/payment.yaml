@@ -1170,7 +1170,6 @@ PaymentReadyRequest:
       type: string
       format: uri
       description: 결제 완료 후 리다이렉트 URL(가맹점 복귀)
-      maxLength: 128
       example: https://merchant.example.com/pay/return
 
 PaymentNextAction:

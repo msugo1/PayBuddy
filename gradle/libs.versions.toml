@@ -6,7 +6,6 @@ openapi-generator = "7.17.0"
 springdoc = "2.8.14"
 swagger-request-validator = "2.46.0"
 ulid-creator = "5.2.3"
-hypersistence-utils = "3.9.0"
 
 [libraries]
 # Spring Boot starters
@@ -22,9 +21,6 @@ flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql
 
 # ULID
 ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
-
-# Hypersistence Utils
-hypersistence-utils = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistence-utils" }
 
 # Kotlin
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
