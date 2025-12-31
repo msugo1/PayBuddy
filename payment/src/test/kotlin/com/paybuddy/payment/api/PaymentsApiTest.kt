@@ -232,7 +232,7 @@ class PaymentsApiTest {
                     .content(
                         """
                         {
-                            "payment_key": "pay_test123",
+                            "payment_key": "01JGQR5K8Y9Z2N4M3X7P6W5V1T",
                             "payment_method": {
                                 "type": "CARD",
                                 "card": {
