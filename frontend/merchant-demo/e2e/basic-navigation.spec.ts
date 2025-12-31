@@ -7,8 +7,8 @@ test('should display merchant page with products', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('PayBuddy 테스트 상점');
 
   // Check that products are displayed
-  await expect(page.locator('text=일반 상품')).toBeVisible();
-  await expect(page.locator('text=고가 상품')).toBeVisible();
+  await expect(page.locator('h3:has-text("일반 상품")')).toBeVisible();
+  await expect(page.locator('h3:has-text("고가 상품")')).toBeVisible();
 
   // Check that at least 5 products exist
   const productCards = page.locator('a[href^="/merchant/product/"]');
@@ -18,8 +18,8 @@ test('should display merchant page with products', async ({ page }) => {
 test('should navigate to product detail page', async ({ page }) => {
   await page.goto('/merchant');
 
-  // Click on first product
-  await page.locator('text=일반 상품').click();
+  // Click on first product (using more specific selector)
+  await page.locator('a[href^="/merchant/product/"]').first().click();
 
   // Should navigate to detail page
   await expect(page).toHaveURL(/\/merchant\/product\//);

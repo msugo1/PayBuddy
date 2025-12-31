@@ -6,7 +6,7 @@ test('should complete payment without 3DS', async ({ page }) => {
   await expect(page.locator('text=PayBuddy 테스트 상점')).toBeVisible();
 
   // Click on first product (일반 상품 - no 3DS)
-  await page.locator('text=일반 상품').click();
+  await page.locator('a[href^="/merchant/product/"]').first().click();
 
   // Should navigate to product detail page
   await expect(page).toHaveURL(/\/merchant\/product\//);
