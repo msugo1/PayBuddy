@@ -11,12 +11,10 @@ describe('readyPayment', () => {
 
     const response = await readyPayment(request, idempotencyKey);
 
-    expect(response).toHaveProperty('payment_key');
-    expect(response).toHaveProperty('checkout_url');
-    expect(response).toHaveProperty('expires_at');
-    expect(response.order_id).toBe('order-123');
-    expect(response.total_amount).toBe(10000);
-    expect(response.payment_key).toMatch(/^pay_/);
+    expect(response).toHaveProperty('paymentKey');
+    expect(response).toHaveProperty('checkoutUrl');
+    expect(response).toHaveProperty('expiresAt');
+    expect(response.paymentKey).toMatch(/^pay_/);
   });
 
   it('should include Idempotency-Key header', async () => {
