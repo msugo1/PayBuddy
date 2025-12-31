@@ -19,9 +19,6 @@ dependencies {
 	// ULID
 	implementation(libs.ulid.creator)
 
-	// Hypersistence Utils for PostgreSQL JSONB support
-	implementation(libs.hypersistence.utils)
-
     testImplementation(libs.swagger.request.validator.mockmvc)
 }
 

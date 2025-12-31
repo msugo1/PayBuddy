@@ -1,8 +1,8 @@
 package com.paybuddy.payment.domain
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 /**
@@ -24,7 +24,7 @@ class PaymentSession(
     @Column(nullable = false)
     val orderId: String,
 
-    @Type(JsonBinaryType::class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     val orderLine: OrderLine,
 
