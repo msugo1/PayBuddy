@@ -14,6 +14,6 @@ class PaymentSessionRepositoryImpl(
     }
 
     override fun findOngoingPaymentSession(merchantId: String, orderId: String): PaymentSession? {
-        return jpaPaymentSessionRepository.findOngoingPaymentSession(merchantId, orderId)
+        return jpaPaymentSessionRepository.findByMerchantIdAndOrderIdAndExpiredFalse(merchantId, orderId)
     }
 }
