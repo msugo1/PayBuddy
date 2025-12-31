@@ -41,3 +41,7 @@ out/
 
 ### macOS ###
 .DS_Store
+
+### Environment & Config ###
+.env
+.mcp.json
