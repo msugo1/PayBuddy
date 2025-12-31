@@ -1168,7 +1168,8 @@ PaymentReadyRequest:
       minimum: 0
     redirect_url:
       type: string
-      format: uri
+      maxLength: 128
+      pattern: '^https?://.+$'
       description: 결제 완료 후 리다이렉트 URL(가맹점 복귀)
       example: https://merchant.example.com/pay/return
 
