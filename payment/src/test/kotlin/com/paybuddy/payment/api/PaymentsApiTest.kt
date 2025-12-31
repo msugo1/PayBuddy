@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -209,6 +210,45 @@ class PaymentsApiTest {
         @Disabled("비즈니스 로직이 아직 구현되지 않아 향후 422 추가필요 - 예: CANCELED 상태의 결제를 confirm 시도")
         @Test
         fun `결제 승인 실패 - 422 Unprocessable Entity (처리 불가능)`() {
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 조회 API")
+    inner class PaymentQueryApiTest {
+
+        @Test
+        fun `결제 상세 조회 - 200 OK`() {
+            mockMvc.perform(
+                get("/payments/{payment_key}", "pay_test123")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(openApi().isValid(validator))
+        }
+
+        @Test
+        fun `영수증 조회 - 200 OK`() {
+            mockMvc.perform(
+                get("/payments/{payment_key}/receipt", "pay_test123")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(openApi().isValid(validator))
+        }
+
+        @Test
+        fun `영수증 조회 (format=json) - 200 OK`() {
+            mockMvc.perform(
+                get("/payments/{payment_key}/receipt", "pay_test123")
+                    .param("format", "json")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(openApi().isValid(validator))
         }
     }
 }
