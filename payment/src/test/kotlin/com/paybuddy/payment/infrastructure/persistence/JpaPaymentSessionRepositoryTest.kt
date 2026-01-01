@@ -189,4 +189,30 @@ class JpaPaymentSessionRepositoryTest {
         assertThat(entity.orderLine.items).hasSize(2)
         assertThat(entity.orderLine).isEqualTo(orderLine)
     }
+
+    @Test
+    @DisplayName("새 세션 save 시 불필요한 SELECT 쿼리 발생 여부 확인 (Persistable 필요성 검증)")
+    fun `새 세션 저장 시 SELECT 쿼리가 먼저 실행되는지 확인`() {
+        // Given
+        val newSession = PaymentSession(
+            id = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
+            merchantId = "mch_new",
+            orderId = "order_new",
+            orderLine = OrderLine(items = listOf(OrderLineItem("상품", 1, 10000, "url"))),
+            amount = PaymentAmount(10000, 9091, 909),
+            expiresAt = OffsetDateTime.parse("2025-12-31T23:59:59+09:00"),
+            redirectUrl = RedirectUrl("https://success.com", "https://fail.com")
+        )
+
+        // When
+        // SQL 로그를 보고 SELECT가 먼저 나오는지 확인
+        // application-test.yml에서 show-sql: true 설정 필요
+        val savedSession = sut.save(newSession)
+
+        // Then
+        assertThat(savedSession.id).isEqualTo(newSession.id)
+        // 로그 확인:
+        // 1. Persistable 없으면: SELECT -> INSERT 순서
+        // 2. Persistable 있으면: INSERT만 실행
+    }
 }

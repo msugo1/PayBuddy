@@ -2,7 +2,6 @@ package com.paybuddy.payment
 
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
-import com.paybuddy.payment.domain.PaymentKeyGenerator
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.PaymentSessionConflictException
 import com.paybuddy.payment.domain.PaymentSessionExpiredException
@@ -11,7 +10,6 @@ import java.time.OffsetDateTime
 
 class PaymentSessionService(
     private val paymentSessionRepository: PaymentSessionRepository,
-    private val paymentKeyGenerator: PaymentKeyGenerator,
     private val paymentSessionFactory: PaymentSessionFactory,
 ) {
     fun prepare(
@@ -30,11 +28,8 @@ class PaymentSessionService(
         )
 
         if (ongoingPaymentSession == null) {
-            val newId = paymentKeyGenerator.generate()  // ULID
-
             val newPaymentSession = paymentSessionRepository.save(
                 paymentSessionFactory.create(
-                    id = newId,
                     merchantId = merchantId,
                     orderId = orderId,
                     orderLine = orderLine,
