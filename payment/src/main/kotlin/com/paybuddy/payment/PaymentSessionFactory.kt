@@ -24,7 +24,7 @@ class PaymentSessionFactory(
         successUrl: String,
         failUrl: String
     ): PaymentSession {
-        val paymentKey = paymentKeyGenerator.generate()
+        val id = paymentKeyGenerator.generate()
         require(totalAmount >= paymentPolicy.minPaymentAmount) {
             "Payment amount must be at least ${paymentPolicy.minPaymentAmount}"
         }
@@ -38,7 +38,7 @@ class PaymentSessionFactory(
         val redirectUrl = RedirectUrl(success = successUrl, fail = failUrl)
 
         return PaymentSession(
-            id = paymentKey,
+            id = id,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,

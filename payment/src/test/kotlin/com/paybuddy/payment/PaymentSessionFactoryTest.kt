@@ -54,7 +54,7 @@ class PaymentSessionFactoryTest {
         )
 
         // Then
-        assertThat(session.id).isNotBlank
+        assertThat(session.id).hasSize(26)  // ULID는 26자
         assertThat(session.merchantId).isEqualTo(merchantId)
         assertThat(session.orderId).isEqualTo(orderId)
         assertThat(session.orderLine).isEqualTo(orderLine)
