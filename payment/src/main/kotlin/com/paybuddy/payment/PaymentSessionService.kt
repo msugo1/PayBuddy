@@ -1,5 +1,7 @@
 package com.paybuddy.payment
 
+import com.paybuddy.payment.domain.DuplicatePaymentRequestException
+import com.paybuddy.payment.domain.ExclusivePaymentGate
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
 import com.paybuddy.payment.domain.PaymentSession
@@ -11,6 +13,7 @@ import java.time.OffsetDateTime
 class PaymentSessionService(
     private val paymentSessionRepository: PaymentSessionRepository,
     private val paymentSessionFactory: PaymentSessionFactory,
+    private val paymentGate: ExclusivePaymentGate,
 ) {
     fun prepare(
         merchantId: String,
@@ -22,44 +25,52 @@ class PaymentSessionService(
         successUrl: String,
         failUrl: String
     ): PaymentSession {
-        val ongoingPaymentSession = paymentSessionRepository.findOngoingPaymentSession(
-            merchantId = merchantId,
-            orderId = orderId,
-        )
+        if (!paymentGate.tryEnter(merchantId, orderId)) {
+            throw DuplicatePaymentRequestException(merchantId, orderId)
+        }
 
-        if (ongoingPaymentSession == null) {
-            val newPaymentSession = paymentSessionRepository.save(
-                paymentSessionFactory.create(
-                    merchantId = merchantId,
-                    orderId = orderId,
-                    orderLine = orderLine,
-                    totalAmount = totalAmount,
-                    supplyAmount = supplyAmount,
-                    vatAmount = vatAmount,
-                    successUrl = successUrl,
-                    failUrl = failUrl
-                )
+        try {
+            val ongoingPaymentSession = paymentSessionRepository.findOngoingPaymentSession(
+                merchantId = merchantId,
+                orderId = orderId,
             )
 
-            return newPaymentSession
+            if (ongoingPaymentSession == null) {
+                val newPaymentSession = paymentSessionRepository.save(
+                    paymentSessionFactory.create(
+                        merchantId = merchantId,
+                        orderId = orderId,
+                        orderLine = orderLine,
+                        totalAmount = totalAmount,
+                        supplyAmount = supplyAmount,
+                        vatAmount = vatAmount,
+                        successUrl = successUrl,
+                        failUrl = failUrl
+                    )
+                )
+
+                return newPaymentSession
+            }
+
+            if (ongoingPaymentSession.hasReachedExpiration(OffsetDateTime.now())) {
+                ongoingPaymentSession.expire()
+                paymentSessionRepository.save(ongoingPaymentSession)
+                throw PaymentSessionExpiredException()
+            }
+
+            val requestedAmount = PaymentAmount(
+                total = totalAmount,
+                supply = supplyAmount,
+                vat = vatAmount
+            )
+
+            if (ongoingPaymentSession.isIdenticalPayment(merchantId, orderId, requestedAmount).not()) {
+                throw PaymentSessionConflictException()
+            }
+
+            return ongoingPaymentSession
+        } finally {
+            paymentGate.exit(merchantId, orderId)
         }
-
-        if (ongoingPaymentSession.hasReachedExpiration(OffsetDateTime.now())) {
-            ongoingPaymentSession.expire()
-            paymentSessionRepository.save(ongoingPaymentSession)
-            throw PaymentSessionExpiredException()
-        }
-
-        val requestedAmount = PaymentAmount(
-            total = totalAmount,
-            supply = supplyAmount,
-            vat = vatAmount
-        )
-
-        if (ongoingPaymentSession.isIdenticalPayment(merchantId, orderId, requestedAmount).not()) {
-            throw PaymentSessionConflictException()
-        }
-
-        return ongoingPaymentSession
     }
 }
