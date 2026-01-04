@@ -29,6 +29,7 @@ class PaymentSessionServiceTest {
         paymentSessionService = PaymentSessionService(
             paymentSessionRepository = paymentSessionRepository,
             paymentSessionFactory = paymentSessionFactory,
+            paymentGate = FakeExclusivePaymentGate(),
         )
         expiresAt = defaultCurrentTime
             .plusMinutes(paymentPolicy.defaultExpireMinutes)
@@ -316,4 +317,14 @@ class FakePaymentKeyGenerator : PaymentKeyGenerator {
     override fun generate(): String {
         return "pay_key_${++counter}"
     }
+}
+
+/**
+ * Fake ExclusivePaymentGate
+ *
+ * 항상 진입 성공 (단위 테스트에서는 동시성 검증 불필요)
+ */
+class FakeExclusivePaymentGate : ExclusivePaymentGate {
+    override fun tryEnter(merchantId: String, orderId: String): Boolean = true
+    override fun exit(merchantId: String, orderId: String) {}
 }
