@@ -1,6 +1,7 @@
 package com.paybuddy.payment.api
 
 import com.paybuddy.payment.api.model.MerchantInfo
+import com.paybuddy.payment.service.PaymentOperations
 import com.paybuddy.payment.api.model.NextActionNone
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
@@ -28,7 +29,9 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
 @RestController
-class PaymentsApiController : PaymentsApi {
+class PaymentsApiController(
+    private val paymentOperations: PaymentOperations
+) : PaymentsApi {
 
     @ExceptionHandler(IdempotencyConflictException::class)
     fun handleIdempotencyConflict(
@@ -44,8 +47,6 @@ class PaymentsApiController : PaymentsApi {
             .status(HttpStatus.CONFLICT)
             .body(problem)
     }
-
-    private val idempotencyStorage = mutableMapOf<String, String>()
 
     override fun getPayment(paymentKey: @NotNull String?): ResponseEntity<PaymentDetailResponse> {
         val response = PaymentDetailResponse()
@@ -130,25 +131,9 @@ class PaymentsApiController : PaymentsApi {
     override fun readyPayment(
         idempotencyKey: @NotNull String?,
         paymentReadyRequest: @Valid PaymentReadyRequest?
-    ): ResponseEntity<PaymentReadyResponse?>? {
-        TODO("Not yet implemented")
-    }
-
-    private fun verifyIdempotentRequest(idempotencyKey: String, request: com.paybuddy.payment.api.model.PaymentReadyRequest) {
-        // FIXME: 일단 제대로 구현하기 전까지는 임의로 hash 되었다고 간주한다.
-        val currentPaymentRequestHash = "${request.merchantId}:${request.orderId}:${request.totalAmount}"
-
-        val previousPaymentRequestHash = idempotencyStorage[idempotencyKey]
-        if (previousPaymentRequestHash == null) {
-            idempotencyStorage[idempotencyKey] = currentPaymentRequestHash
-            return
-        }
-
-        if (currentPaymentRequestHash == previousPaymentRequestHash) {
-            return
-        }
-
-        throw IdempotencyConflictException(idempotencyKey)
+    ): ResponseEntity<PaymentReadyResponse> {
+        val response = paymentOperations.readyPayment(idempotencyKey!!, paymentReadyRequest!!)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
     override fun confirmPayment(paymentConfirmRequest: @Valid PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
