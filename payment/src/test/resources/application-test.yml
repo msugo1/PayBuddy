@@ -3,10 +3,18 @@ spring:
     url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:paybuddy}
     username: ${POSTGRES_USER:paybuddy}
     password: ${POSTGRES_PASSWORD:paybuddy}
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT:6379}
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: none
+
+payment:
+  gate:
+    lock-ttl-seconds: 2
 
 logging:
   level:

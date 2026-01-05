@@ -17,6 +17,7 @@ import com.paybuddy.payment.api.model.ReceiptResponseOrder
 import com.paybuddy.payment.api.model.ReceiptResponsePayment
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.OrderLineItem
+import com.paybuddy.payment.domain.DuplicatePaymentRequestException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import org.springframework.http.HttpStatus
@@ -33,6 +34,21 @@ class PaymentsApiController(
     private val paymentOperations: PaymentOperations,
     private val idempotencyValidator: IdempotencyValidator
 ) : PaymentsApi {
+
+    @ExceptionHandler(DuplicatePaymentRequestException::class)
+    fun handleDuplicatePaymentRequest(
+        e: DuplicatePaymentRequestException
+    ): ResponseEntity<ProblemDetail> {
+        val problem = ProblemDetail.forStatus(HttpStatus.CONFLICT)
+        problem.type = URI.create("urn:paybuddy:problem:duplicate-payment-request")
+        problem.title = "Duplicate payment request"
+        problem.detail = "Another payment request is already processing this order."
+        problem.setProperty("error_code", "DUPLICATE_PAYMENT_REQUEST")
+
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(problem)
+    }
     @ExceptionHandler(IdempotencyConflictException::class)
     fun handleIdempotencyConflict(
         e: IdempotencyConflictException
@@ -41,7 +57,7 @@ class PaymentsApiController(
         problem.type = URI.create("urn:paybuddy:problem:idempotency-conflict")
         problem.title = "Idempotency conflict"
         problem.detail = "The same Idempotency-Key was used with a different request payload."
-        problem.setProperty("error_code", "IDEMPOTENCY_CONFLICT")
+        problem.setProperty("error_code", "PAYMENT_REQUEST_MISMATCH")
 
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
