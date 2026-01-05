@@ -25,7 +25,7 @@ class PaymentSessionFactoryTest {
 
     @BeforeEach
     fun setUp() {
-        paymentKeyGenerator = UuidPaymentKeyGenerator()
+        paymentKeyGenerator = UlidPaymentKeyGenerator()
         paymentPolicy = DefaultPaymentPolicy()
         paymentSessionFactory = PaymentSessionFactory(paymentKeyGenerator, paymentPolicy)
     }

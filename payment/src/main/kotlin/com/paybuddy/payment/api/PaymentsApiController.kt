@@ -172,9 +172,10 @@ class PaymentsApiController(
 
     override fun confirmPayment(paymentConfirmRequest: @Valid PaymentConfirmRequest?): ResponseEntity<PaymentConfirmResponse> {
         // Mock implementation for contract testing
+        val paymentKey = paymentConfirmRequest?.paymentKey
         val response = PaymentConfirmResponse(
             "pay_1234567890",
-            "pay_test123",
+            paymentKey,
             "order-20251210-001",
             "CAPTURED",
             50000,
@@ -183,7 +184,7 @@ class PaymentsApiController(
             OffsetDateTime.now(ZoneOffset.UTC)
         )
             .approvedAt(OffsetDateTime.now(ZoneOffset.UTC))
-            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/pay_test123/receipt"))
+            .receiptUrl(URI.create("https://api.paybuddy.com/v1/payments/$paymentKey/receipt"))
             .nextAction(NextActionNone("none"))
 
         return ResponseEntity.ok(response)

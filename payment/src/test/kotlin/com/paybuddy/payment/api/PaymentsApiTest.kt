@@ -290,7 +290,7 @@ class PaymentsApiTest {
         @Test
         fun `결제 상세 조회 - 200 OK`() {
             mockMvc.perform(
-                get("/payments/{payment_key}", "pay_test123")
+                get("/payments/{payment_key}", "01JGQR5K8Y9Z2N4M3X7P6W5V1T")
                     .accept(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -301,7 +301,7 @@ class PaymentsApiTest {
         @Test
         fun `영수증 조회 - 200 OK`() {
             mockMvc.perform(
-                get("/payments/{payment_key}/receipt", "pay_test123")
+                get("/payments/{payment_key}/receipt", "01JGQR5K8Y9Z2N4M3X7P6W5V1T")
                     .accept(MediaType.APPLICATION_JSON)
             )
                 .andExpect(status().isOk)
@@ -312,7 +312,7 @@ class PaymentsApiTest {
         @Test
         fun `영수증 조회 (format=json) - 200 OK`() {
             mockMvc.perform(
-                get("/payments/{payment_key}/receipt", "pay_test123")
+                get("/payments/{payment_key}/receipt", "01JGQR5K8Y9Z2N4M3X7P6W5V1T")
                     .param("format", "json")
                     .accept(MediaType.APPLICATION_JSON)
             )
