@@ -11,18 +11,18 @@ import com.paybuddy.payment.api.model.PaymentResponsePaymentMethod
 import com.paybuddy.payment.api.model.PaymentResponsePaymentMethodCard
 import com.paybuddy.payment.api.model.PaymentReadyRequest
 import com.paybuddy.payment.api.model.PaymentReadyResponse
-import com.paybuddy.payment.api.model.PaymentResponse
 import com.paybuddy.payment.api.model.ReceiptResponse
 import com.paybuddy.payment.api.model.ReceiptResponseMerchant
 import com.paybuddy.payment.api.model.ReceiptResponseOrder
 import com.paybuddy.payment.api.model.ReceiptResponsePayment
+import com.paybuddy.payment.domain.OrderLine
+import com.paybuddy.payment.domain.OrderLineItem
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 import java.time.OffsetDateTime
@@ -30,7 +30,8 @@ import java.time.ZoneOffset
 
 @RestController
 class PaymentsApiController(
-    private val paymentOperations: PaymentOperations
+    private val paymentOperations: PaymentOperations,
+    private val idempotencyValidator: IdempotencyValidator
 ) : PaymentsApi {
 
     @ExceptionHandler(IdempotencyConflictException::class)
@@ -129,10 +130,43 @@ class PaymentsApiController(
     }
 
     override fun readyPayment(
-        idempotencyKey: @NotNull String?,
-        paymentReadyRequest: @Valid PaymentReadyRequest?
+        idempotencyKey: @NotNull String,
+        paymentReadyRequest: @Valid PaymentReadyRequest
     ): ResponseEntity<PaymentReadyResponse> {
-        val response = paymentOperations.readyPayment(idempotencyKey!!, paymentReadyRequest!!)
+        val requestHash = idempotencyValidator.hashRequest(
+            paymentReadyRequest.merchantId,
+            paymentReadyRequest.orderId,
+            paymentReadyRequest.totalAmount
+        )
+        idempotencyValidator.validate(idempotencyKey, requestHash)
+
+        val internalOrderLine = OrderLine(
+            items = paymentReadyRequest.orderLine.items.map { apiItem ->
+                OrderLineItem(
+                    name = apiItem.name,
+                    quantity = apiItem.quantity,
+                    unitAmount = apiItem.unitAmount,
+                    imageUrl = apiItem.imageUrl.toString()
+                )
+            }
+        )
+
+        val paymentSession = paymentOperations.prepare(
+            merchantId = paymentReadyRequest.merchantId,
+            orderId = paymentReadyRequest.orderId,
+            orderLine = internalOrderLine,
+            totalAmount = paymentReadyRequest.totalAmount,
+            supplyAmount = paymentReadyRequest.supplyAmount ?: 0,
+            vatAmount = paymentReadyRequest.vatAmount ?: 0,
+            successUrl = paymentReadyRequest.successUrl.toString(),
+            failUrl = paymentReadyRequest.failUrl.toString()
+        )
+
+        val response = PaymentReadyResponse()
+            .paymentKey(paymentSession.paymentKey)
+            .checkoutUrl("https://payment.paybuddy.com/checkout/${paymentSession.paymentKey}")
+            .expiresAt(paymentSession.expiresAt)
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 

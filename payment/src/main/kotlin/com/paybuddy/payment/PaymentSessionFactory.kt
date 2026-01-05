@@ -5,8 +5,10 @@ import com.paybuddy.payment.domain.PaymentAmount
 import com.paybuddy.payment.domain.PaymentPolicy
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.RedirectUrl
+import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
+@Component
 class PaymentSessionFactory(
     private val paymentPolicy: PaymentPolicy
 ) {

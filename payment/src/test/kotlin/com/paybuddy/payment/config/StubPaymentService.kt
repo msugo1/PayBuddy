@@ -1,11 +1,14 @@
 package com.paybuddy.payment.config
 
-import com.paybuddy.payment.api.IdempotencyConflictException
-import com.paybuddy.payment.api.model.PaymentReadyRequest
-import com.paybuddy.payment.api.model.PaymentReadyResponse
+import com.paybuddy.payment.domain.DefaultPaymentPolicy
+import com.paybuddy.payment.domain.OrderLine
+import com.paybuddy.payment.domain.PaymentAmount
+import com.paybuddy.payment.domain.PaymentSession
+import com.paybuddy.payment.domain.RedirectUrl
 import com.paybuddy.payment.service.PaymentOperations
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.UUID
 
 /**
  * Contract Test용 Stub 구현체
@@ -13,33 +16,31 @@ import java.time.ZoneOffset
  */
 class StubPaymentService : PaymentOperations {
 
-    private val idempotencyStorage = mutableMapOf<String, String>()
-
-    override fun readyPayment(
-        idempotencyKey: String,
-        request: PaymentReadyRequest
-    ): PaymentReadyResponse {
-        verifyIdempotentRequest(idempotencyKey, request)
-
-        return PaymentReadyResponse()
-            .paymentKey("pay_${java.util.UUID.randomUUID()}")
-            .checkoutUrl("https://payment.paybuddy.com/checkout/test")
-            .expiresAt(OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(10))
-    }
-
-    private fun verifyIdempotentRequest(idempotencyKey: String, request: PaymentReadyRequest) {
-        val currentPaymentRequestHash = "${request.merchantId}:${request.orderId}:${request.totalAmount}"
-
-        val previousPaymentRequestHash = idempotencyStorage[idempotencyKey]
-        if (previousPaymentRequestHash == null) {
-            idempotencyStorage[idempotencyKey] = currentPaymentRequestHash
-            return
-        }
-
-        if (currentPaymentRequestHash == previousPaymentRequestHash) {
-            return
-        }
-
-        throw IdempotencyConflictException(idempotencyKey)
+    override fun prepare(
+        merchantId: String,
+        orderId: String,
+        orderLine: OrderLine,
+        totalAmount: Long,
+        supplyAmount: Long,
+        vatAmount: Long,
+        successUrl: String,
+        failUrl: String
+    ): PaymentSession {
+        return PaymentSession(
+            paymentKey = "pay_${UUID.randomUUID()}",
+            merchantId = merchantId,
+            orderId = orderId,
+            orderLine = orderLine,
+            amount = PaymentAmount(
+                total = totalAmount,
+                supply = supplyAmount,
+                vat = vatAmount
+            ),
+            redirectUrl = RedirectUrl(
+                success = successUrl,
+                fail = failUrl
+            ),
+            expiresAt = OffsetDateTime.now(ZoneOffset.UTC)
+        )
     }
 }

@@ -7,14 +7,17 @@ import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.PaymentSessionConflictException
 import com.paybuddy.payment.domain.PaymentSessionExpiredException
 import com.paybuddy.payment.domain.PaymentSessionRepository
+import com.paybuddy.payment.service.PaymentOperations
+import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 
+@Service
 class PaymentSessionService(
     private val paymentSessionRepository: PaymentSessionRepository,
     private val paymentKeyGenerator: PaymentKeyGenerator,
     private val paymentSessionFactory: PaymentSessionFactory,
-) {
-    fun prepare(
+) : PaymentOperations {
+    override fun prepare(
         merchantId: String,
         orderId: String,
         orderLine: OrderLine,

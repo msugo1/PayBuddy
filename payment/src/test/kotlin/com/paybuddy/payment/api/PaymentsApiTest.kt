@@ -4,14 +4,18 @@ import com.atlassian.oai.validator.OpenApiInteractionValidator
 import com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.openApi
 import com.atlassian.oai.validator.report.LevelResolver
 import com.atlassian.oai.validator.report.ValidationReport.Level
-import com.paybuddy.payment.config.PaymentTestConfig
+import com.paybuddy.payment.config.StubPaymentService
+import com.paybuddy.payment.service.PaymentOperations
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -20,9 +24,28 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.io.File
 
+// TODO: web mvc test 가 slice test 어노테이션이라 그런지 내부에 test config 를 두어도 import 없이는 인식하지 못함.
+//  현재 API 테스트는 향후 spring boot test 로 전환해야 하는데,
+//  작업 범위에서 벗어나기도 하고 openapi spec validator 의 경우 mockmvc 로 검증하고 있어서 이 부분에 대한 처리 고민이 필요하다.
+//  향후 테스트 전환 예정
+@Import(PaymentsApiTest.PaymentTestConfig::class)
 @WebMvcTest(PaymentsApiController::class)
-@Import(PaymentTestConfig::class)
 class PaymentsApiTest {
+
+    @TestConfiguration
+    class PaymentTestConfig {
+
+        @Bean
+        @Primary
+        fun paymentOperations(): PaymentOperations {
+            return StubPaymentService()
+        }
+
+        @Bean
+        fun idempotencyValidator(): IdempotencyValidator {
+            return IdempotencyValidator()
+        }
+    }
 
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -56,10 +79,21 @@ class PaymentsApiTest {
                         {
                             "merchant_id": "mch_1234567890",
                             "order_id": "order-20251210-001",
+                            "order_line": {
+                                "items": [
+                                    {
+                                        "name": "아메리카노",
+                                        "quantity": 2,
+                                        "unit_amount": 4500,
+                                        "image_url": "https://cdn.example.com/products/americano.jpg"
+                                    }
+                                ]
+                            },
                             "total_amount": 50000,
                             "supply_amount": 45455,
                             "vat_amount": 4545,
-                            "redirect_url": "https://merchant.example.com/pay/return"
+                            "success_url": "https://merchant.example.com/pay/success",
+                            "fail_url": "https://merchant.example.com/pay/fail"
                         }
                         """.trimIndent()
                     )
@@ -79,10 +113,21 @@ class PaymentsApiTest {
                         {
                             "merchant_id": "mch_1234567890",
                             "order_id": "order-20251210-001",
+                            "order_line": {
+                                "items": [
+                                    {
+                                        "name": "아메리카노",
+                                        "quantity": 2,
+                                        "unit_amount": 4500,
+                                        "image_url": "https://cdn.example.com/products/americano.jpg"
+                                    }
+                                ]
+                            },
                             "total_amount": -1000,
                             "supply_amount": -990,
                             "vat_amount": -10,
-                            "redirect_url": "https://merchant.example.com/pay/return"
+                            "success_url": "https://merchant.example.com/pay/success",
+                            "fail_url": "https://merchant.example.com/pay/fail"
                         }
                         """.trimIndent()
                     )
@@ -117,10 +162,21 @@ class PaymentsApiTest {
                     {
                         "merchant_id": "mch_1234567890",
                         "order_id": "order-20251210-001",
+                        "order_line": {
+                            "items": [
+                                {
+                                    "name": "아메리카노",
+                                    "quantity": 2,
+                                    "unit_amount": 4500,
+                                    "image_url": "https://cdn.example.com/products/americano.jpg"
+                                }
+                            ]
+                        },
                         "total_amount": 50000,
                         "supply_amount": 45455,
                         "vat_amount": 4545,
-                        "redirect_url": "https://merchant.example.com/pay/return"
+                        "success_url": "https://merchant.example.com/pay/success",
+                        "fail_url": "https://merchant.example.com/pay/fail"
                     }
                     """.trimIndent()
                     )
@@ -138,10 +194,21 @@ class PaymentsApiTest {
                     {
                         "merchant_id": "mch_1234567890",
                         "order_id": "order-20251210-001",
+                        "order_line": {
+                            "items": [
+                                {
+                                    "name": "아메리카노",
+                                    "quantity": 2,
+                                    "unit_amount": 4500,
+                                    "image_url": "https://cdn.example.com/products/americano.jpg"
+                                }
+                            ]
+                        },
                         "total_amount": 50001,
                         "supply_amount": 45455,
                         "vat_amount": 4545,
-                        "redirect_url": "https://merchant.example.com/pay/return"
+                        "success_url": "https://merchant.example.com/pay/success",
+                        "fail_url": "https://merchant.example.com/pay/fail"
                     }
                     """.trimIndent()
                     )

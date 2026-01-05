@@ -1,5 +1,7 @@
 package com.paybuddy.payment.domain
 
+import org.springframework.stereotype.Component
+
 /**
  * 결제 시스템의 비즈니스 정책
  *
@@ -14,6 +16,7 @@ interface PaymentPolicy {
     val minPaymentAmount: Long
 }
 
+@Component
 class DefaultPaymentPolicy : PaymentPolicy {
     override val defaultExpireMinutes = 15L
     override val minPaymentAmount = 1000L
