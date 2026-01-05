@@ -355,6 +355,10 @@ PaymentStatus:
     - EXPIRED: 세션/가승인 만료
   example: CAPTURED
 
+PaymentDetailResponse:
+  allOf:
+    - $ref: '#/PaymentResponse'
+
 ReceiptResponse:
   type: object
   description: 소비자용 영수증 (민감정보 최소화)
@@ -1095,15 +1099,59 @@ MerchantInfo:
     mcc_code:
       type: string
 
+OrderLine:
+  type: object
+  description: 주문 상품 목록
+  required:
+    - items
+  properties:
+    items:
+      type: array
+      description: 주문 상품 항목
+      minItems: 1
+      items:
+        $ref: '#/OrderLineItem'
+
+OrderLineItem:
+  type: object
+  description: 주문 상품 항목
+  required:
+    - name
+    - quantity
+    - unit_amount
+    - image_url
+  properties:
+    name:
+      type: string
+      description: 상품명
+      example: 아메리카노
+      minLength: 1
+    quantity:
+      type: integer
+      description: 수량
+      example: 2
+      minimum: 1
+    unit_amount:
+      type: integer
+      format: int64
+      description: 단가
+      example: 4500
+      minimum: 0
+    image_url:
+      type: string
+      format: uri
+      description: 상품 이미지 URL
+      example: https://cdn.example.com/products/americano.jpg
+
 PaymentReadyRequest:
   type: object
   required:
     - merchant_id
     - order_id
+    - order_line
     - total_amount
-    - supply_amount
-    - vat_amount
-    - redirect_url
+    - success_url
+    - fail_url
   properties:
     merchant_id:
       type: string
@@ -1113,26 +1161,36 @@ PaymentReadyRequest:
       type: string
       description: 주문 ID (가맹점 기준 멱등 키)
       example: order-20251210-001
+    order_line:
+      $ref: '#/OrderLine'
     total_amount:
       type: integer
+      format: int64
       description: 총 결제금액(승인/정산 기준)
       example: 50000
       minimum: 0
     supply_amount:
       type: integer
+      format: int64
       description: 공급가액
       example: 45455
       minimum: 0
     vat_amount:
       type: integer
+      format: int64
       description: 부가세액
       example: 4545
       minimum: 0
-    redirect_url:
+    success_url:
       type: string
       format: uri
-      description: 결제 완료 후 리다이렉트 URL(가맹점 복귀)
-      example: https://merchant.example.com/pay/return
+      description: 결제 성공 시 리다이렉트 URL
+      example: https://merchant.example.com/pay/success
+    fail_url:
+      type: string
+      format: uri
+      description: 결제 실패 시 리다이렉트 URL
+      example: https://merchant.example.com/pay/fail
 
 PaymentNextAction:
   type: object
