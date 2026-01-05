@@ -2,6 +2,7 @@ package com.paybuddy.payment
 
 import com.paybuddy.payment.domain.DefaultPaymentPolicy
 import com.paybuddy.payment.domain.PaymentAmount
+import com.paybuddy.payment.domain.PaymentKeyGenerator
 import com.paybuddy.payment.domain.PaymentPolicy
 import com.paybuddy.payment.domain.RedirectUrl
 import org.assertj.core.api.Assertions.assertThat
@@ -18,13 +19,15 @@ import java.time.temporal.ChronoUnit
 @DisplayName("PaymentSessionFactory")
 class PaymentSessionFactoryTest {
 
+    private lateinit var paymentKeyGenerator: PaymentKeyGenerator
     private lateinit var paymentPolicy: PaymentPolicy
     private lateinit var paymentSessionFactory: PaymentSessionFactory
 
     @BeforeEach
     fun setUp() {
+        paymentKeyGenerator = UuidPaymentKeyGenerator()
         paymentPolicy = DefaultPaymentPolicy()
-        paymentSessionFactory = PaymentSessionFactory(paymentPolicy)
+        paymentSessionFactory = PaymentSessionFactory(paymentKeyGenerator, paymentPolicy)
     }
 
     @ParameterizedTest
@@ -32,7 +35,6 @@ class PaymentSessionFactoryTest {
     @DisplayName("최소 결제 금액 이상이면 결제세션이 생성된다")
     fun `최소 결제 금액 정책을 만족하면 세션이 생성된다`(totalAmount: Long) {
         // Given
-        val paymentKey = "pay_test"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -41,7 +43,6 @@ class PaymentSessionFactoryTest {
 
         // When
         val session = paymentSessionFactory.create(
-            paymentKey = paymentKey,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,
@@ -53,7 +54,7 @@ class PaymentSessionFactoryTest {
         )
 
         // Then
-        assertThat(session.paymentKey).isEqualTo(paymentKey)
+        assertThat(session.paymentKey).isNotBlank()
         assertThat(session.merchantId).isEqualTo(merchantId)
         assertThat(session.orderId).isEqualTo(orderId)
         assertThat(session.orderLine).isEqualTo(orderLine)
@@ -74,7 +75,6 @@ class PaymentSessionFactoryTest {
     @DisplayName("최소 결제 금액 미만이면 예외가 발생한다")
     fun `최소 결제 금액 정책을 위반하면 세션 생성이 거부된다`(totalAmount: Long) {
         // Given
-        val paymentKey = "pay_test"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -84,7 +84,6 @@ class PaymentSessionFactoryTest {
         // When & Then
         assertThatThrownBy {
             paymentSessionFactory.create(
-                paymentKey = paymentKey,
                 merchantId = merchantId,
                 orderId = orderId,
                 orderLine = orderLine,
@@ -101,7 +100,6 @@ class PaymentSessionFactoryTest {
     @DisplayName("새 결제세션의 만료시간은 정책의 기본 만료시간으로 설정된다")
     fun `생성된 세션의 만료시간은 정책 기본값을 따른다`() {
         // Given
-        val paymentKey = "pay_test"
         val merchantId = "mch_123"
         val orderId = "order_456"
         val orderLine = DEFAULT_ORDER_LINE
@@ -109,7 +107,6 @@ class PaymentSessionFactoryTest {
 
         // When
         val session = paymentSessionFactory.create(
-            paymentKey = paymentKey,
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,

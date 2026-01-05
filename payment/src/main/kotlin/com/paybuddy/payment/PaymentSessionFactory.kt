@@ -2,6 +2,7 @@ package com.paybuddy.payment
 
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
+import com.paybuddy.payment.domain.PaymentKeyGenerator
 import com.paybuddy.payment.domain.PaymentPolicy
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.RedirectUrl
@@ -10,10 +11,10 @@ import java.time.OffsetDateTime
 
 @Component
 class PaymentSessionFactory(
+    private val paymentKeyGenerator: PaymentKeyGenerator,
     private val paymentPolicy: PaymentPolicy
 ) {
     fun create(
-        paymentKey: String,
         merchantId: String,
         orderId: String,
         orderLine: OrderLine,
@@ -23,6 +24,7 @@ class PaymentSessionFactory(
         successUrl: String,
         failUrl: String
     ): PaymentSession {
+        val paymentKey = paymentKeyGenerator.generate()
         require(totalAmount >= paymentPolicy.minPaymentAmount) {
             "Payment amount must be at least ${paymentPolicy.minPaymentAmount}"
         }

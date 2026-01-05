@@ -24,13 +24,12 @@ class PaymentSessionServiceTest {
     fun setUp() {
         paymentSessionRepository = FakePaymentSessionRepository()
         paymentKeyGenerator = FakePaymentKeyGenerator()
-        paymentSessionFactory = PaymentSessionFactory(DefaultPaymentPolicy())
+        paymentPolicy = DefaultPaymentPolicy()
+        paymentSessionFactory = PaymentSessionFactory(paymentKeyGenerator, paymentPolicy)
         paymentSessionService = PaymentSessionService(
             paymentSessionRepository = paymentSessionRepository,
-            paymentKeyGenerator = paymentKeyGenerator,
             paymentSessionFactory = paymentSessionFactory,
         )
-        paymentPolicy = DefaultPaymentPolicy()
         expiresAt = defaultCurrentTime
             .plusMinutes(paymentPolicy.defaultExpireMinutes)
     }
