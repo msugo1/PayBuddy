@@ -1,5 +1,6 @@
 package com.paybuddy.payment.config
 
+import com.github.f4b6a3.ulid.Ulid
 import com.paybuddy.payment.domain.DefaultPaymentPolicy
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
@@ -27,7 +28,7 @@ class StubPaymentService : PaymentOperations {
         failUrl: String
     ): PaymentSession {
         return PaymentSession(
-            paymentKey = "pay_${UUID.randomUUID()}",
+            id = Ulid.fast().toString(),
             merchantId = merchantId,
             orderId = orderId,
             orderLine = orderLine,

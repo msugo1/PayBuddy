@@ -7,8 +7,17 @@ plugins {
 dependencies {
 	implementation(libs.spring.boot.starter.web)
 	implementation(libs.spring.boot.starter.validation)
+	implementation(libs.spring.boot.starter.data.jpa)
 	implementation(libs.jackson.module.kotlin)
 	implementation(libs.springdoc.openapi.starter.webmvc.ui)
+
+	// Database
+	runtimeOnly(libs.postgresql)
+	implementation(libs.flyway.core)
+	implementation(libs.flyway.database.postgresql)
+
+	// ULID
+	implementation(libs.ulid.creator)
 
     testImplementation(libs.swagger.request.validator.mockmvc)
 }

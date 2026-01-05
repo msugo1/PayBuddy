@@ -25,7 +25,7 @@ class PaymentSessionFactoryTest {
 
     @BeforeEach
     fun setUp() {
-        paymentKeyGenerator = UuidPaymentKeyGenerator()
+        paymentKeyGenerator = UlidPaymentKeyGenerator()
         paymentPolicy = DefaultPaymentPolicy()
         paymentSessionFactory = PaymentSessionFactory(paymentKeyGenerator, paymentPolicy)
     }
@@ -54,7 +54,7 @@ class PaymentSessionFactoryTest {
         )
 
         // Then
-        assertThat(session.paymentKey).isNotBlank()
+        assertThat(session.id).hasSize(26)  // ULID는 26자
         assertThat(session.merchantId).isEqualTo(merchantId)
         assertThat(session.orderId).isEqualTo(orderId)
         assertThat(session.orderLine).isEqualTo(orderLine)
