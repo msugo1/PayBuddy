@@ -167,7 +167,7 @@ Response:
 ## Tasks
 
 ### Phase 0-1: 기반
-- [ ] PaymentSession `expired` 제거, OpenAPI 업데이트
+- [ ] Ready API에 buyer 필드 추가 (3DS2용, optional)
 - [ ] Payment 엔티티 + JPA + 테스트 (상태 전이, finalAmount 계산)
 
 ### Phase 3-5: 검증 로직
