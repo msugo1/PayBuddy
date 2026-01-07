@@ -278,6 +278,9 @@ class PaymentTest {
 
     private fun createCardDetails(
         maskedNumber: String = "1234-56**-****-7890",
+        expiryMonth: Int? = 12,
+        expiryYear: Int? = 25,
+        holderName: String? = null,
         bin: String = "123456",
         brand: CardBrand? = CardBrand.VISA,
         issuerCode: String = "04",
@@ -290,6 +293,9 @@ class PaymentTest {
         return CardPaymentDetails(
             card = Card(
                 maskedNumber = maskedNumber,
+                expiryMonth = expiryMonth,
+                expiryYear = expiryYear,
+                holderName = holderName,
                 bin = bin,
                 brand = brand,
                 issuerCode = issuerCode,
