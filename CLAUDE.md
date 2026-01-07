@@ -8,6 +8,20 @@
 - task 시작 전: 복잡하면 subtask 분할 (`expand --id=<id> --research`)
 - commit: subtask 없으면 task당 1개, 있으면 subtask당 1개
 
+### PR 작업 흐름
+**CRITICAL**: PR 생성 후 다음 작업 시작 전 **반드시 PRD의 "PR 구조" 섹션 확인**
+
+- **Stacked PR 구조인 경우**: 현재 브랜치에서 새 브랜치 생성
+  ```bash
+  git checkout -b feat/next-feature  # main으로 가지 말 것!
+  ```
+- **단일 PR 구조인 경우**: main으로 checkout
+  ```bash
+  git checkout main && git pull
+  ```
+
+PRD에 PR 구조가 명시되어 있으면 **절대 추측하지 말고** 그대로 따를 것.
+
 ## 커밋 메시지
 - **Conventional Commit 준수**: `type: 제목`
 - **간결하게**: 설명 필요한 경우만 body 작성
