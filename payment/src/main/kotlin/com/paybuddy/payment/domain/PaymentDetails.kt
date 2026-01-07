@@ -12,6 +12,9 @@ data class CardPaymentDetails(
     @Embedded
     @AttributeOverrides(
         AttributeOverride(name = "maskedNumber", column = Column(name = "card_masked_number")),
+        AttributeOverride(name = "expiryMonth", column = Column(name = "card_expiry_month")),
+        AttributeOverride(name = "expiryYear", column = Column(name = "card_expiry_year")),
+        AttributeOverride(name = "holderName", column = Column(name = "card_holder_name")),
         AttributeOverride(name = "bin", column = Column(name = "card_bin")),
         AttributeOverride(name = "brand", column = Column(name = "card_brand")),
         AttributeOverride(name = "issuerCode", column = Column(name = "card_issuer_code")),

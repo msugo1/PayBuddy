@@ -194,6 +194,9 @@ class PaymentTest {
         return CardPaymentDetails(
             card = Card(
                 maskedNumber = "1234-56**-****-7890",
+                expiryMonth = 12,
+                expiryYear = 25,
+                holderName = null,
                 bin = "123456",
                 brand = CardBrand.VISA,
                 issuerCode = "04",
