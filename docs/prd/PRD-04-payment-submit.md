@@ -58,11 +58,12 @@ INITIALIZED → 검증 실행
 2. Gate 진입 (sessionId 기준)
 3. 기존 Payment 확인 (PAYMENT_PROCESSING → 에러, 그 외 → CANCELLED)
 4. Payment 생성 (INITIALIZED)
-5. 검증 (가맹점, 한도, BIN, FDS, 할부) → 실패 시 FAILED
-6. 프로모션 적용
-7. 카드 토큰화
-8. 인증 필요 여부 판단
-9. 상태 전이 + Gate 해제 + 응답
+5. payment.submit(cardDetails) - 카드 정보 먼저 설정 (검증 실패 시 fail() 안전성)
+6. 검증 (가맹점, 한도, BIN, FDS, 할부) → 실패 시 payment.fail()
+7. 프로모션 적용 (payment.addPromotion(promotion, minPaymentAmount))
+8. 카드 토큰화
+9. 인증 필요 여부 판단
+10. 상태 전이 (requestAuthentication() / completeWithoutAuthentication()) + Gate 해제 + 응답
 ```
 
 ---
@@ -71,54 +72,79 @@ INITIALIZED → 검증 실행
 
 ### Payment
 ```kotlin
-data class Payment(
+@Entity
+class Payment(
     val id: String,                         // ULID
-    val paymentKey: String,
+    val paymentKey: String,                 // ULID (= PaymentSession.id)
     val merchantId: String,
-    val status: PaymentStatus,
+    status: PaymentStatus,
     val version: Long,                      // Optimistic Lock
     val originalAmount: Long,
-    val effectivePromotions: List<EffectivePromotion>,
-    val paymentDetails: PaymentDetails?,    // 검증 전 실패 시 null
+    private val effectivePromotions: MutableList<EffectivePromotion>,
+    var cardPaymentDetails: CardPaymentDetails?,  // submit() 후 설정, 검증 전 실패 시에도 존재
     val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime,
+    var updatedAt: OffsetDateTime,
 ) {
+    var status: PaymentStatus = status
+        private set
+
     val finalAmount: Long
         get() = originalAmount - effectivePromotions.sumOf { it.amount }
+
+    fun submit(cardDetails: CardPaymentDetails)
+    fun addPromotion(promotion: EffectivePromotion, minPaymentAmount: Long)
+    fun fail(errorCode: String, failureReason: String)
+    fun requestAuthentication()
+    fun completeAuthentication()
+    fun completeWithoutAuthentication()
 }
 ```
 
-### PaymentDetails / PaymentResult
+### CardPaymentDetails / PaymentResult
 ```kotlin
-sealed class PaymentDetails {
-    abstract val result: PaymentResult?
-}
-
+@Embeddable
 data class CardPaymentDetails(
-    val card: Card,
+    @Embedded val card: Card,
     val installmentMonths: Int,
-    override val result: PaymentResult?,
-) : PaymentDetails()
+    @Embedded val result: PaymentResult?,
+)
 
-sealed class PaymentResult {
-    sealed class Success : PaymentResult() {
-        data class Card(val approvalNumber: String, val approvedAt: OffsetDateTime) : Success()
-    }
-    data class Failure(val errorCode: String, val failureReason: String) : PaymentResult()
-}
+@Embeddable
+data class PaymentResult(
+    val approvalNumber: String?,        // 성공 시
+    val approvedAt: OffsetDateTime?,    // 성공 시
+    val errorCode: String?,             // 실패 시
+    val failureReason: String?,         // 실패 시
+)
 ```
+
+**참고**: sealed class 대신 단순 data class 사용. 복잡도 줄이고 JPA 매핑 단순화.
 
 ### Card / EffectivePromotion
 ```kotlin
+@Embeddable
 data class Card(
-    val bin: String, val last4: String, val brand: CardBrand, val type: CardType,
-    val issuerCode: String, val issuerName: String, val isDomestic: Boolean,
+    val maskedNumber: String,           // 1234-56**-****-7890
+    val bin: String,                    // BIN (Bank Identification Number)
+    val brand: CardBrand?,
+    val issuerCode: String,             // 발급사 코드 (04 = 삼성, 06 = 신한 등)
+    val acquirerCode: String,           // 매입사 코드
+    val cardType: CardType,             // CREDIT, DEBIT, PREPAID
+    val ownerType: OwnerType,           // PERSONAL, CORPORATE
+    val issuedCountry: String,          // KR, US 등
+    val productCode: String?,           // 카드 상품 코드
 )
 
 data class EffectivePromotion(
-    val promotionId: String, val name: String, val provider: PromotionProvider, val amount: Long,
+    val name: String,                   // 스냅샷: 프로모션명 (수정되어도 기록 유지)
+    val provider: PromotionProvider,    // PLATFORM, CARD_ISSUER, ACQUIRER
+    val amount: Long,
 )
 ```
+
+**참고**:
+- `EffectivePromotion`은 스냅샷이므로 promotionId 제거 (통계는 별도 이벤트 로그)
+- `Card`는 BIN lookup 결과를 포함한 전체 정보 (기존 Card 엔티티 재사용)
 
 ---
 
@@ -127,7 +153,7 @@ data class EffectivePromotion(
 ```kotlin
 data class MerchantContract(
     val merchantId: String, val status: MerchantStatus, val contractEndDate: LocalDate?,
-    val mcc: String, val minPaymentAmount: Long,
+    val mcc: String,
     val paymentMethodPolicies: Map<PaymentMethodType, PaymentMethodPolicy>,
     val installmentPolicy: MerchantInstallmentPolicy?,
 )
@@ -137,7 +163,14 @@ interface MerchantLimitService {
     fun consume(merchantId: String, paymentId: String, amount: Long)
     fun restore(merchantId: String, paymentId: String, amount: Long)
 }
+
+interface PaymentPolicy {
+    val defaultExpireMinutes: Long
+    val minPaymentAmount: Long  // 전역 최소 결제 금액 (1차: 1000원)
+}
 ```
+
+**참고**: 최소 결제 금액은 1차 구현에서 전역 정책 사용. 가맹점별 차등 정책은 향후 확장.
 
 ---
 
