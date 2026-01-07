@@ -11,6 +11,8 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: none
+  flyway:
+    clean-disabled: false
 
 payment:
   gate:
