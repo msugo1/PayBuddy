@@ -176,7 +176,7 @@ class PaymentTest {
 
     private fun createPayment(
         id: String = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
-        paymentKey: String = "pay_01JGXM9K3V7N2P8Q4R5S6T7U",
+        paymentKey: String = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
         merchantId: String = "mch_123",
         status: PaymentStatus = PaymentStatus.INITIALIZED,
         originalAmount: Long = 10000
