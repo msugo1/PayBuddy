@@ -26,8 +26,10 @@ class StubMerchantContractService : MerchantContractService {
                 )
             ),
             installmentPolicy = MerchantInstallmentPolicy(
-                allowedMonths = setOf(0, 2, 3, 6, 12),
-                interestFreeMonths = setOf(0, 2, 3)
+                merchantId = merchantId,
+                supportsInstallment = true,
+                minInstallmentAmount = 50_000,
+                availableMonths = setOf(2, 3, 6, 12)
             )
         )
     }

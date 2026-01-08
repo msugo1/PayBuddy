@@ -9,9 +9,15 @@ data class PaymentMethodPolicy(
 )
 
 data class MerchantInstallmentPolicy(
-    val allowedMonths: Set<Int>,
-    val interestFreeMonths: Set<Int> = emptySet()
-)
+    val merchantId: String,
+    val supportsInstallment: Boolean,
+    val minInstallmentAmount: Long,
+    val availableMonths: Set<Int>
+) {
+    fun supportsInstallment(amount: Long): Boolean {
+        return supportsInstallment && amount >= minInstallmentAmount
+    }
+}
 
 data class MerchantContract(
     val merchantId: String,
@@ -19,5 +25,5 @@ data class MerchantContract(
     val contractEndDate: LocalDate?,
     val mcc: String,
     val paymentMethodPolicies: Map<PaymentMethodType, PaymentMethodPolicy>,
-    val installmentPolicy: MerchantInstallmentPolicy?
+    val installmentPolicy: MerchantInstallmentPolicy
 )

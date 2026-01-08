@@ -206,7 +206,7 @@ class PaymentTest {
                 issuedCountry = "KR",
                 productCode = null
             ),
-            installmentMonths = 0
+            installment = null
         )
     }
 }
