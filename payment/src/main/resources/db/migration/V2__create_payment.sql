@@ -17,7 +17,11 @@ CREATE TABLE payment (
     card_owner_type VARCHAR(20),
     card_issued_country VARCHAR(10),
     card_product_code VARCHAR(20),
+    card_expiry_month INT,
+    card_expiry_year INT,
+    card_holder_name VARCHAR(50),
     installment_months INT,
+    installment_interest_free BOOLEAN,
 
     -- PaymentResult
     approval_number VARCHAR(50),

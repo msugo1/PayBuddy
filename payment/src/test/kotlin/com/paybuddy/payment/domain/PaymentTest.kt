@@ -305,7 +305,7 @@ class PaymentTest {
                 issuedCountry = issuedCountry,
                 productCode = productCode
             ),
-            installmentMonths = 0
+            installment = null
         )
     }
 

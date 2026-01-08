@@ -30,8 +30,8 @@ data class CardPaymentDetails(
     )
     val card: Card,
 
-    @Column(name = "installment_months")
-    val installmentMonths: Int,
+    @Embedded
+    val installment: Installment?,
 
     @Embedded
     val result: PaymentResult? = null,

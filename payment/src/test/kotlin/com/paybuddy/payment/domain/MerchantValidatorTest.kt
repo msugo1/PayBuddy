@@ -28,7 +28,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -51,7 +56,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -74,7 +84,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -97,7 +112,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -120,7 +140,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.VIRTUAL_ACCOUNT to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -143,7 +168,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = false)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -166,7 +196,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -192,7 +227,12 @@ class MerchantValidatorTest {
                         minAmount = 50_000L
                     )
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
 
@@ -215,7 +255,12 @@ class MerchantValidatorTest {
                 paymentMethodPolicies = mapOf(
                     PaymentMethodType.CARD to PaymentMethodPolicy(enabled = true)
                 ),
-                installmentPolicy = null
+                installmentPolicy = MerchantInstallmentPolicy(
+                    merchantId = merchantId,
+                    supportsInstallment = false,
+                    minInstallmentAmount = 0,
+                    availableMonths = emptySet()
+                )
             )
         )
         merchantLimitService.setLimit(merchantId, 100_000L)

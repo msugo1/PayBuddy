@@ -52,7 +52,7 @@ class JpaPaymentRepositoryTest {
                 issuedCountry = "KR",
                 productCode = null
             ),
-            installmentMonths = 0
+            installment = null
         )
 
         payment.submit(cardDetails)
