@@ -193,7 +193,7 @@ class PaymentTest {
     private fun createCardDetails(): CardPaymentDetails {
         return CardPaymentDetails(
             card = Card(
-                maskedNumber = "1234-56**-****-7890",
+                maskedNumber = "1234********7890",
                 expiryMonth = 12,
                 expiryYear = 25,
                 holderName = null,
