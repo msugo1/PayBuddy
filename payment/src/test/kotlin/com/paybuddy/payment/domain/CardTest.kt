@@ -3,15 +3,28 @@ package com.paybuddy.payment.domain
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class CardTest {
-    private val binLookupService = FakeBinLookupService()
+    
+    private val BIN_SAMPLE = Bin(
+        number = "411111",
+        brand = CardBrand.VISA,
+        issuerCode = "04",
+        acquirerCode = "04",
+        cardType = CardType.CREDIT,
+        ownerType = OwnerType.PERSONAL,
+        issuedCountry = "KR",
+        productCode = "VISA-CLASSIC"
+    )
 
     @Test
-    fun `카드 생성 - 모든 필드 매핑 검증`() {
+    fun `카드 생성 시 모든 필드가 정확히 매핑된다`() {
         // Given
         val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
+        val bin = BIN_SAMPLE
 
         // When
         val card = Card.create(cardNumber, 12, 28, "HONG GILDONG", bin)
@@ -19,7 +32,7 @@ class CardTest {
         // Then
         assertThat(card).isEqualTo(
             Card(
-                maskedNumber = "4111-****-****-1111",
+                maskedNumber = "4111********1111",
                 expiryMonth = 12,
                 expiryYear = 28,
                 holderName = "HONG GILDONG",
@@ -36,202 +49,10 @@ class CardTest {
     }
 
     @Test
-    fun `카드 번호 마스킹 - 16자리`() {
+    fun `소유자 이름이 없어도 카드를 생성할 수 있다`() {
         // Given
         val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.maskedNumber).isEqualTo("4111-****-****-1111")
-    }
-
-    @Test
-    fun `카드 번호 마스킹 - 15자리 AMEX`() {
-        // Given
-        val cardNumber = "340000000000009"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.maskedNumber).isEqualTo("3400-****-***0-009")
-    }
-
-    @Test
-    fun `카드 번호 마스킹 - 하이픈 포함된 입력`() {
-        // Given
-        val cardNumber = "4111-1111-1111-1111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.maskedNumber).isEqualTo("4111-****-****-1111")
-    }
-
-    @Test
-    fun `카드 번호 마스킹 - 공백 포함된 입력`() {
-        // Given
-        val cardNumber = "4111 1111 1111 1111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.maskedNumber).isEqualTo("4111-****-****-1111")
-    }
-
-    @Test
-    fun `Bin 정보 매핑 - MASTERCARD DEBIT`() {
-        // Given
-        val cardNumber = "5100000000000008"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.MASTERCARD)
-        assertThat(card.issuerCode).isEqualTo("06")
-        assertThat(card.acquirerCode).isEqualTo("06")
-        assertThat(card.cardType).isEqualTo(CardType.DEBIT)
-        assertThat(card.ownerType).isEqualTo(OwnerType.CORPORATE)
-        assertThat(card.issuedCountry).isEqualTo("US")
-        assertThat(card.productCode).isNull()
-    }
-
-    @Test
-    fun `만료일 검증 - 유효한 월`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.expiryMonth).isEqualTo(12)
-        assertThat(card.expiryYear).isEqualTo(28)
-    }
-
-    @Test
-    fun `만료일 검증 실패 - 유효하지 않은 월 (0)`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When & Then
-        assertThatThrownBy {
-            Card.create(cardNumber, 0, 25, null, bin)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 만료 월")
-    }
-
-    @Test
-    fun `만료일 검증 실패 - 유효하지 않은 월 (13)`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When & Then
-        assertThatThrownBy {
-            Card.create(cardNumber, 13, 25, null, bin)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 만료 월")
-    }
-
-    @Test
-    fun `만료일 검증 실패 - 음수 연도`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When & Then
-        assertThatThrownBy {
-            Card.create(cardNumber, 12, -1, null, bin)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 만료 연도")
-    }
-
-    @Test
-    fun `만료일 검증 실패 - 이미 만료된 카드 (2자리 년도)`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When & Then
-        assertThatThrownBy {
-            Card.create(cardNumber, 12, 20, null, bin)  // 2020년 12월
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("만료된 카드")
-    }
-
-    @Test
-    fun `만료일 검증 실패 - 이미 만료된 카드 (4자리 년도)`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When & Then
-        assertThatThrownBy {
-            Card.create(cardNumber, 1, 2020, null, bin)  // 2020년 1월
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("만료된 카드")
-    }
-
-    @Test
-    fun `만료일 검증 성공 - 현재 월`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-        val now = java.time.YearMonth.now()
-
-        // When
-        val card = Card.create(cardNumber, now.monthValue, now.year % 100, null, bin)
-
-        // Then
-        assertThat(card.expiryMonth).isEqualTo(now.monthValue)
-        assertThat(card.expiryYear).isEqualTo(now.year % 100)
-    }
-
-    @Test
-    fun `만료일 검증 성공 - 미래 날짜`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 30, null, bin)  // 2030년 12월
-
-        // Then
-        assertThat(card.expiryMonth).isEqualTo(12)
-        assertThat(card.expiryYear).isEqualTo(30)
-    }
-
-    @Test
-    fun `카드 소유자 이름 - 있음`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, "HONG GILDONG", bin)
-
-        // Then
-        assertThat(card.holderName).isEqualTo("HONG GILDONG")
-    }
-
-    @Test
-    fun `카드 소유자 이름 - 없음 (null)`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
+        val bin = BIN_SAMPLE
 
         // When
         val card = Card.create(cardNumber, 12, 28, null, bin)
@@ -240,37 +61,162 @@ class CardTest {
         assertThat(card.holderName).isNull()
     }
 
-    @Test
-    fun `유효하지 않은 카드 번호 길이 - 12자리`() {
+    // ===== 카드 번호 마스킹 =====
+
+    @ParameterizedTest(name = "{0} -> {1}")
+    @CsvSource(
+        "4111111111111111, 4111********1111",       // 16자리 기본
+        "4111-1111-1111-1111, 4111********1111",   // 하이픈 제거 후 마스킹
+        "4111 1111 1111 1111, 4111********1111",   // 공백 제거 후 마스킹
+        "5555555555554444, 5555********4444",       // 16자리 다른 번호
+        "378282246310005, 3782*******0005",         // 15자리 (AMEX)
+        "4222222222222, 4222*****2222",             // 13자리 (최소)
+        "6304000000000000000, 6304***********0000"  // 19자리 (최대)
+    )
+    fun `카드 번호는 앞 4자리와 뒤 4자리만 노출하고 나머지는 마스킹된다`(input: String, expected: String) {
         // Given
-        val cardNumber = "123456789012"
-        val bin = binLookupService.lookup(cardNumber)
+        val bin = BIN_SAMPLE
+
+        // When
+        val card = Card.create(input, 12, 28, null, bin)
+
+        // Then
+        assertThat(card.maskedNumber).isEqualTo(expected)
+    }
+
+    // ===== 만료일 검증 =====
+
+    @ParameterizedTest(name = "월: {0}")
+    @ValueSource(ints = [1, 6, 12])
+    fun `만료 월은 1-12 사이만 허용한다`(month: Int) {
+        // Given
+        val cardNumber = "4111111111111111"
+        val bin = BIN_SAMPLE
+
+        // When
+        val card = Card.create(cardNumber, month, 28, null, bin)
+
+        // Then
+        assertThat(card.expiryMonth).isEqualTo(month)
+    }
+
+    @ParameterizedTest(name = "월: {0}")
+    @ValueSource(ints = [0, 13, -1, 100])
+    fun `만료 월이 1-12 범위를 벗어나면 카드를 생성할 수 없다`(month: Int) {
+        // Given
+        val cardNumber = "4111111111111111"
+        val bin = BIN_SAMPLE
 
         // When & Then
         assertThatThrownBy {
-            Card.create(cardNumber, 12, 28, null, bin)
+            Card.create(cardNumber, month, 28, null, bin)
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 카드 번호 길이")
+            .hasMessageContaining("유효하지 않은 만료 월")
     }
 
-    @Test
-    fun `유효하지 않은 카드 번호 길이 - 20자리`() {
+    @ParameterizedTest(name = "년: {0}")
+    @CsvSource(
+        "26",    // 2026년 (2자리, 현재 기준)
+        "27",    // 2027년
+        "50",    // 2050년
+        "99",    // 2099년 (2자리 최대)
+        "2026",  // 2026년 (4자리, 현재 기준)
+        "2027",  // 2027년
+        "2050",  // 2050년
+        "2099"   // 2099년 (4자리 최대)
+    )
+    fun `만료 년도는 2자리(0-99) 또는 4자리(2000-2099) 형식만 허용한다`(year: Int) {
         // Given
-        val cardNumber = "12345678901234567890"
-        val bin = binLookupService.lookup(cardNumber)
+        val cardNumber = "4111111111111111"
+        val bin = BIN_SAMPLE
+
+        // When
+        val card = Card.create(cardNumber, 12, year, null, bin)
+
+        // Then
+        assertThat(card.expiryYear).isEqualTo(year)
+    }
+
+    @ParameterizedTest(name = "년: {0}")
+    @CsvSource(
+        "-1",    // 음수
+        "100",   // 3자리 (100-1999 불허)
+        "101",
+        "1999",
+        "2100",  // 2100년 이상 불허
+        "3000"
+    )
+    fun `만료 년도 형식이 올바르지 않으면 카드를 생성할 수 없다`(year: Int) {
+        // Given
+        val cardNumber = "4111111111111111"
+        val bin = BIN_SAMPLE
 
         // When & Then
         assertThatThrownBy {
-            Card.create(cardNumber, 12, 28, null, bin)
+            Card.create(cardNumber, 12, year, null, bin)
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 카드 번호 길이")
+            .hasMessageContaining("유효하지 않은 만료 연도 형식")
     }
 
-    @Test
-    fun `Luhn 체크섬 검증 실패`() {
+    @ParameterizedTest(name = "{0}년 {1}월")
+    @CsvSource(
+        "12, 20",    // 2020년 12월
+        "1, 2020",   // 2020년 1월 (4자리)
+        "6, 24"      // 2024년 6월
+    )
+    fun `만료 기한이 지난 카드는 생성할 수 없다`(month: Int, year: Int) {
         // Given
-        val cardNumber = "4111111111111112"
-        val bin = binLookupService.lookup(cardNumber)
+        val cardNumber = "4111111111111111"
+        val bin = BIN_SAMPLE
+
+        // When & Then
+        assertThatThrownBy {
+            Card.create(cardNumber, month, year, null, bin)
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("만료된 카드")
+    }
+
+    // ===== Luhn 알고리즘 검증 =====
+
+    @ParameterizedTest(name = "유효: {0}")
+    @ValueSource(
+        strings = [
+            "4222222222222",      // 13자리 (최소)
+            "378282246310005",    // 15자리 (AMEX)
+            "4111111111111111",   // 16자리 (VISA)
+            "5555555555554444",   // 16자리 (Mastercard)
+            "6011111111111117",   // 16자리 (Discover)
+            "3530111333300000",   // 16자리 (JCB)
+            "6304000000000000000" // 19자리 (최대)
+        ]
+    )
+    fun `Luhn 알고리즘을 통과한 카드 번호만 허용한다`(cardNumber: String) {
+        // Given
+        val bin = BIN_SAMPLE
+
+        // When
+        val card = Card.create(cardNumber, 12, 28, null, bin)
+
+        // Then
+        assertThat(card.maskedNumber).isNotEmpty()
+    }
+
+    @ParameterizedTest(name = "무효: {0}")
+    @ValueSource(
+        strings = [
+            "4222222222223",      // 13자리 체크섬 오류 (마지막 자리 +1)
+            "4111111111111112",   // 16자리 마지막 자리 +1 (체크 디지트 오류)
+            "4111111111111110",   // 16자리 마지막 자리 -1
+            "5555555555554445",   // 16자리 체크섬 오류
+            "5555555555554443",   // 16자리 체크섬 오류
+            "6304000000000000001", // 19자리 체크섬 오류 (마지막 자리 +1)
+            "1234567890123456",   // 무작위 번호
+            "1111111111111111"    // 모두 같은 숫자
+        ]
+    )
+    fun `Luhn 알고리즘 체크섬이 맞지 않는 카드는 허용하지 않는다`(cardNumber: String) {
+        // Given
+        val bin = BIN_SAMPLE
 
         // When & Then
         assertThatThrownBy {
@@ -279,298 +225,21 @@ class CardTest {
             .hasMessageContaining("체크섬 오류")
     }
 
-    @Test
-    fun `Luhn 체크섬 검증 성공 - VISA`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.VISA)
-        assertThat(card.bin).isEqualTo("411111")
-    }
-
-    @Test
-    fun `다양한 카드 브랜드 - VISA`() {
-        // Given
-        val cardNumber = "4111111111111111"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.VISA)
-        assertThat(card.issuerCode).isEqualTo("04")
-        assertThat(card.issuedCountry).isEqualTo("KR")
-        assertThat(card.productCode).isEqualTo("VISA-CLASSIC")
-    }
-
-    @Test
-    fun `다양한 카드 브랜드 - MASTERCARD`() {
-        // Given
-        val cardNumber = "5500000000000004"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.MASTERCARD)
-        assertThat(card.issuerCode).isEqualTo("06")
-        assertThat(card.issuedCountry).isEqualTo("KR")
-        assertThat(card.productCode).isEqualTo("MC-STANDARD")
-    }
-
-    @Test
-    fun `다양한 카드 브랜드 - AMEX`() {
-        // Given
-        val cardNumber = "340000000000009"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.AMEX)
-        assertThat(card.issuerCode).isEqualTo("03")
-        assertThat(card.issuedCountry).isEqualTo("US")
-        assertThat(card.productCode).isEqualTo("AMEX-GOLD")
-        assertThat(card.maskedNumber).isEqualTo("3400-****-***0-009")
-    }
-
-    @Test
-    fun `다양한 카드 브랜드 - JCB`() {
-        // Given
-        val cardNumber = "3566002020360505"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.brand).isEqualTo(CardBrand.JCB)
-        assertThat(card.issuerCode).isEqualTo("07")
-        assertThat(card.issuedCountry).isEqualTo("JP")
-        assertThat(card.productCode).isEqualTo("JCB-STANDARD")
-    }
-
-    @Test
-    fun `카드 타입 - DEBIT 체크카드`() {
-        // Given
-        val cardNumber = "4000000000000002"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.cardType).isEqualTo(CardType.DEBIT)
-        assertThat(card.productCode).isEqualTo("VISA-DEBIT")
-    }
-
-    @Test
-    fun `카드 타입 - PREPAID 선불카드`() {
-        // Given
-        val cardNumber = "4000000000000028"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.cardType).isEqualTo(CardType.PREPAID)
-        assertThat(card.productCode).isEqualTo("VISA-PREPAID")
-    }
-
-    @Test
-    fun `소유자 타입 - 법인카드`() {
-        // Given
-        val cardNumber = "4000000000000051"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.ownerType).isEqualTo(OwnerType.CORPORATE)
-        assertThat(card.productCode).isEqualTo("VISA-CORPORATE")
-    }
-
-    @Test
-    fun `해외 발급 카드 - 미국`() {
-        // Given
-        val cardNumber = "4000000000000077"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.issuedCountry).isEqualTo("US")
-        assertThat(card.productCode).isEqualTo("VISA-US")
-    }
-
-    @Test
-    fun `해외 발급 카드 - 일본`() {
-        // Given
-        val cardNumber = "3566002020360505"
-        val bin = binLookupService.lookup(cardNumber)
-
-        // When
-        val card = Card.create(cardNumber, 12, 28, null, bin)
-
-        // Then
-        assertThat(card.issuedCountry).isEqualTo("JP")
-        assertThat(card.brand).isEqualTo(CardBrand.JCB)
-    }
-}
-
-class FakeBinLookupService : BinLookupService {
-    override fun lookup(cardNumber: String): Bin {
-        val digitsOnly = cardNumber.replace(Regex("[^0-9]"), "")
-        val binNumber = digitsOnly.take(6)
-
-        return when (digitsOnly) {
-            // VISA
-            "4111111111111111" -> visaCredit(binNumber)
-            "4000000000000002" -> visaDebit(binNumber)
-            "4000000000000028" -> visaPrepaid(binNumber)
-            "4000000000000051" -> visaCorporate(binNumber)
-            "4000000000000077" -> visaUs(binNumber)
-
-            // Mastercard
-            "5500000000000004" -> mastercardCredit(binNumber)
-            "5100000000000008" -> mastercardDebit(binNumber)
-
-            // AMEX
-            "340000000000009" -> amexCredit(binNumber)
-
-            // JCB
-            "3566002020360505" -> jcbCredit(binNumber)
-
-            // Default fallback by prefix
-            else -> when {
-                binNumber.startsWith("4") -> visaCredit(binNumber)
-                binNumber.startsWith("51") || binNumber.startsWith("52") || binNumber.startsWith("53") ||
-                binNumber.startsWith("54") || binNumber.startsWith("55") -> mastercardCredit(binNumber)
-                binNumber.startsWith("34") || binNumber.startsWith("37") -> amexCredit(binNumber)
-                binNumber.startsWith("35") -> jcbCredit(binNumber)
-                else -> localCard(binNumber)
-            }
-        }
-    }
-
-    private fun visaCredit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.VISA,
-        issuerCode = "04",
-        acquirerCode = "04",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "KR",
-        productCode = "VISA-CLASSIC"
+    @ParameterizedTest(name = "{0}자리")
+    @ValueSource(
+        strings = [
+            "123456789012",           // 12자리 (최소 미만)
+            "12345678901234567890"    // 20자리 (최대 초과)
+        ]
     )
+    fun `카드 번호는 13-19자리만 허용한다`(cardNumber: String) {
+        // Given
+        val bin = BIN_SAMPLE
 
-    private fun visaDebit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.VISA,
-        issuerCode = "04",
-        acquirerCode = "04",
-        cardType = CardType.DEBIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "KR",
-        productCode = "VISA-DEBIT"
-    )
-
-    private fun visaPrepaid(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.VISA,
-        issuerCode = "04",
-        acquirerCode = "04",
-        cardType = CardType.PREPAID,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "KR",
-        productCode = "VISA-PREPAID"
-    )
-
-    private fun visaCorporate(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.VISA,
-        issuerCode = "04",
-        acquirerCode = "04",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.CORPORATE,
-        issuedCountry = "KR",
-        productCode = "VISA-CORPORATE"
-    )
-
-    private fun visaUs(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.VISA,
-        issuerCode = "99",
-        acquirerCode = "99",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "US",
-        productCode = "VISA-US"
-    )
-
-    private fun mastercardCredit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.MASTERCARD,
-        issuerCode = "06",
-        acquirerCode = "06",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "KR",
-        productCode = "MC-STANDARD"
-    )
-
-    private fun mastercardDebit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.MASTERCARD,
-        issuerCode = "06",
-        acquirerCode = "06",
-        cardType = CardType.DEBIT,
-        ownerType = OwnerType.CORPORATE,
-        issuedCountry = "US",
-        productCode = null
-    )
-
-    private fun amexCredit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.AMEX,
-        issuerCode = "03",
-        acquirerCode = "03",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "US",
-        productCode = "AMEX-GOLD"
-    )
-
-    private fun jcbCredit(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.JCB,
-        issuerCode = "07",
-        acquirerCode = "07",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "JP",
-        productCode = "JCB-STANDARD"
-    )
-
-    private fun localCard(binNumber: String) = Bin(
-        number = binNumber,
-        brand = CardBrand.LOCAL,
-        issuerCode = "99",
-        acquirerCode = "99",
-        cardType = CardType.CREDIT,
-        ownerType = OwnerType.PERSONAL,
-        issuedCountry = "KR",
-        productCode = null
-    )
+        // When & Then
+        assertThatThrownBy {
+            Card.create(cardNumber, 12, 28, null, bin)
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("유효하지 않은 카드 번호 길이")
+    }
 }
