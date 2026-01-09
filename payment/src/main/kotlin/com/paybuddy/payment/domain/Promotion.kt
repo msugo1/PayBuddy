@@ -25,6 +25,17 @@ data class Promotion(
     val validFrom: Instant,
     val validUntil: Instant,
 ) {
+    init {
+        if (discountType == DiscountType.FIXED && maxDiscountAmount != null) {
+            require(discountValue <= maxDiscountAmount) {
+                "FIXED 타입에서 discountValue는 maxDiscountAmount 이하여야 합니다"
+            }
+        }
+
+        require(cardBrand != null || cardType != null || issuerCode != null || minAmount != null) {
+            "최소 하나의 적용조건이 필요합니다"
+        }
+    }
     fun matches(card: Card?, amount: Long): Boolean {
         if (card == null) {
             return false
