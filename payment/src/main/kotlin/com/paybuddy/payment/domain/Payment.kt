@@ -52,6 +52,36 @@ class Payment(
     val effectivePromotions: List<EffectivePromotion>
         get() = _effectivePromotions.toList()
 
+    fun addEffectivePromotions(
+        promotions: List<Promotion>,
+        optimizer: PromotionOptimizer
+    ) {
+        val card = cardPaymentDetails?.card ?: return
+
+        val matchingPromotions = promotions.filter { it.matches(card, originalAmount) }
+        if (matchingPromotions.isEmpty()) return
+
+        val candidates = matchingPromotions.map { promotion ->
+            PromotionOptimizer.Candidate(
+                discountAmount = promotion.calculateDiscount(originalAmount).toInt(),
+                isIssuerPromotion = promotion.isIssuerDrivenPromotion()
+            )
+        }
+
+        val selectedIndices = optimizer.optimize(candidates, originalAmount)
+
+        selectedIndices.forEach { index ->
+            val promotion = matchingPromotions[index]
+            _effectivePromotions.add(
+                EffectivePromotion(
+                    name = promotion.name,
+                    provider = promotion.provider,
+                    amount = promotion.calculateDiscount(originalAmount)
+                )
+            )
+        }
+    }
+
     fun submit(cardDetails: CardPaymentDetails) {
         require(cardPaymentDetails == null) { "이미 결제 수단이 제출되었습니다" }
         cardPaymentDetails = cardDetails
