@@ -13,18 +13,10 @@ package com.paybuddy.payment.domain
  */
 class MeetInTheMiddlePromotionOptimizer : PromotionOptimizer {
     override fun optimize(
-        candidates: List<PromotionOptimizer.Candidate>,
-        maxDiscount: Long
-    ): List<Int> {
-        if (maxDiscount <= 0L) {
-            return emptyList()
-        }
-
-        if (candidates.isEmpty()) {
-            return emptyList()
-        }
-
-        // TODO: MITM 알고리즘 구현
-        return emptyList()
+        promotions: List<Promotion>,
+        originalAmount: Long,
+        capacity: Long
+    ): List<Promotion> {
+        TODO()
     }
 }

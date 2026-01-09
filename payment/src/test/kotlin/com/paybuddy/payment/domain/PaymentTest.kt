@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.Instant
 
 class PaymentTest {
 
@@ -22,6 +23,28 @@ class PaymentTest {
 
             // Then
             assertThat(finalAmount).isEqualTo(10000)
+        }
+
+        @Test
+        fun `프로모션이 적용되면 originalAmount에서 할인이 차감된다`() {
+            // Given
+            val payment = createPayment(originalAmount = 10000, minPaymentAmount = 1000)
+            payment.submit(createCardDetails(brand = CardBrand.VISA))
+
+            val promotions = listOf(
+                createPromotion(
+                    discountType = DiscountType.FIXED,
+                    discountValue = 3000,
+                    cardBrand = CardBrand.VISA
+                )
+            )
+
+            // When
+            payment.addEffectivePromotions(promotions, KnapsackPromotionOptimizer())
+
+            // Then
+            assertThat(payment.finalAmount).isEqualTo(7000)
+            assertThat(payment.effectivePromotions).hasSize(1)
         }
     }
 
@@ -150,14 +173,16 @@ class PaymentTest {
         paymentKey: String = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
         merchantId: String = "mch_123",
         status: PaymentStatus = PaymentStatus.INITIALIZED,
-        originalAmount: Long = 10000
+        originalAmount: Long = 10000,
+        minPaymentAmount: Long = 0
     ): Payment {
         return Payment(
             id = id,
             paymentKey = paymentKey,
             merchantId = merchantId,
             status = status,
-            originalAmount = originalAmount
+            originalAmount = originalAmount,
+            minPaymentAmount = minPaymentAmount
         )
     }
 
@@ -194,6 +219,7 @@ class PaymentTest {
         merchantId: String = "mch_123",
         status: PaymentStatus = PaymentStatus.INITIALIZED,
         originalAmount: Long = 10000,
+        minPaymentAmount: Long = 0,
         cardBrand: CardBrand? = CardBrand.VISA,
         cardType: CardType = CardType.CREDIT,
         issuerCode: String = "04"
@@ -203,7 +229,8 @@ class PaymentTest {
             paymentKey = paymentKey,
             merchantId = merchantId,
             status = status,
-            originalAmount = originalAmount
+            originalAmount = originalAmount,
+            minPaymentAmount = minPaymentAmount
         )
         payment.submit(
             createCardDetails(
@@ -213,5 +240,35 @@ class PaymentTest {
             )
         )
         return payment
+    }
+
+    private fun createPromotion(
+        id: String = "promo_123",
+        name: String = "테스트 프로모션",
+        provider: PromotionProvider = PromotionProvider.PLATFORM,
+        discountType: DiscountType = DiscountType.FIXED,
+        discountValue: Long = 1000,
+        maxDiscountAmount: Long? = null,
+        cardBrand: CardBrand? = null,
+        cardType: CardType? = null,
+        issuerCode: String? = null,
+        minAmount: Long? = null,
+        validFrom: Instant = Instant.now(),
+        validUntil: Instant = Instant.now().plusSeconds(86400)
+    ): Promotion {
+        return Promotion(
+            id = id,
+            name = name,
+            provider = provider,
+            discountType = discountType,
+            discountValue = discountValue,
+            maxDiscountAmount = maxDiscountAmount,
+            cardBrand = cardBrand,
+            cardType = cardType,
+            issuerCode = issuerCode,
+            minAmount = minAmount,
+            validFrom = validFrom,
+            validUntil = validUntil
+        )
     }
 }

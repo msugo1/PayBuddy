@@ -6,80 +6,74 @@ import org.springframework.stereotype.Component
 @Component
 class KnapsackPromotionOptimizer : PromotionOptimizer {
     override fun optimize(
-        candidates: List<PromotionOptimizer.Candidate>,
-        maxDiscount: Long
-    ): List<Int> {
-        if (maxDiscount <= 0L) {
+        promotions: List<Promotion>,
+        originalAmount: Long,
+        capacity: Long
+    ): List<Promotion> {
+        if (capacity <= 0L || promotions.isEmpty()) {
             return emptyList()
         }
 
-        require(maxDiscount <= Int.MAX_VALUE.toLong()) {
-            "최대 할인 가능 금액이 너무 큽니다: $maxDiscount"
-        }
-        val capacity = maxDiscount.toInt()
+        val capacityInt = capacity.toInt()
+        val discounts = promotions.map { it.calculateDiscount(originalAmount).toInt() }
 
-        if (candidates.isEmpty()) {
-            return emptyList()
-        }
-
-        data class OptimalPromotionPath(
-            val issuerPromotionCount: Int,
-            val previousDiscountSum: Int?,
-            val lastSelectedPromotionIndex: Int?
-        )
-
-        val optimalPaths = HashMap<Int, OptimalPromotionPath>(1024)
-        optimalPaths[0] = OptimalPromotionPath(
+        val optimalPaths = HashMap<Int, Path>(1024)
+        optimalPaths[0] = Path(
             issuerPromotionCount = 0,
-            previousDiscountSum = null,
-            lastSelectedPromotionIndex = null
+            prevDiscountSum = null,
+            lastPromotionIndex = null
         )
 
         // 0-1 Knapsack DP
-        for (candidateIndex in candidates.indices) {
-            val candidate = candidates[candidateIndex]
-            val discountAmount = candidate.discountAmount
-            val issuerDelta = if (candidate.isIssuerPromotion) 1 else 0
+        for (index in promotions.indices) {
+            val promotion = promotions[index]
+            val discount = discounts[index]
+            val issuerDelta = if (promotion.isIssuerDrivenPromotion()) 1 else 0
 
-            // snapshot을 통해 각 프로모션을 한 번만 사용하도록 보장
-            val currentPaths = optimalPaths.entries.toList()
+            // snapshot으로 각 프로모션 중복 사용 방지
+            val snapshot = optimalPaths.entries.toList()
 
-            for ((discountSum, path) in currentPaths) {
-                val nextDiscountSum = discountSum + discountAmount
-                if (nextDiscountSum > capacity) {
+            for ((currentSum, path) in snapshot) {
+                val nextSum = currentSum + discount
+                if (nextSum > capacityInt) {
                     continue
                 }
 
-                val candidateIssuerCount = path.issuerPromotionCount + issuerDelta
-                val candidatePath = OptimalPromotionPath(
-                    issuerPromotionCount = candidateIssuerCount,
-                    previousDiscountSum = discountSum,
-                    lastSelectedPromotionIndex = candidateIndex
+                val newPath = Path(
+                    issuerPromotionCount = path.issuerPromotionCount + issuerDelta,
+                    prevDiscountSum = currentSum,
+                    lastPromotionIndex = index
                 )
 
-                val existingPath = optimalPaths[nextDiscountSum]
+                val existing = optimalPaths[nextSum]
 
-                // 동일 할인 합계일 때 카드사 프로모션 개수가 더 많은 경로 선택
-                if (existingPath == null || candidatePath.issuerPromotionCount > existingPath.issuerPromotionCount) {
-                    optimalPaths[nextDiscountSum] = candidatePath
+                // 동일 할인 시 카드사 프로모션 개수 우선
+                if (existing == null || newPath.issuerPromotionCount > existing.issuerPromotionCount) {
+                    optimalPaths[nextSum] = newPath
                 }
             }
         }
 
-        val maxDiscountSum = optimalPaths.keys.maxOrNull() ?: 0
+        val maxSum = optimalPaths.keys.maxOrNull() ?: return emptyList()
 
         // 경로 역추적
-        val selectedPromotions = mutableListOf<Int>()
-        var currentSum = maxDiscountSum
+        val result = mutableListOf<Promotion>()
+        var sum = maxSum
 
-        while (currentSum != 0) {
-            val path = optimalPaths[currentSum] ?: break
-            val promotionIndex = path.lastSelectedPromotionIndex ?: break
+        while (sum > 0) {
+            val path = optimalPaths[sum] ?: break
+            val index = path.lastPromotionIndex ?: break
 
-            selectedPromotions.add(promotionIndex)
-            currentSum = path.previousDiscountSum ?: break
+            result.add(promotions[index])
+            sum = path.prevDiscountSum ?: break
         }
 
-        return selectedPromotions
+        return result
     }
+
+    private data class Path(
+        val issuerPromotionCount: Int,
+        val prevDiscountSum: Int?,
+        val lastPromotionIndex: Int?
+    )
 }

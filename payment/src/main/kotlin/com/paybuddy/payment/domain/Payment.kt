@@ -26,6 +26,9 @@ class Payment(
     @Column(nullable = false)
     val originalAmount: Long,
 
+    @Column(nullable = false)
+    val minPaymentAmount: Long = 0,
+
     @JdbcTypeCode(SqlTypes.JSON) @Column(
         name = "effective_promotions",
         columnDefinition = "jsonb"
@@ -59,19 +62,14 @@ class Payment(
         val card = cardPaymentDetails?.card ?: return
 
         val matchingPromotions = promotions.filter { it.matches(card, originalAmount) }
-        if (matchingPromotions.isEmpty()) return
-
-        val candidates = matchingPromotions.map { promotion ->
-            PromotionOptimizer.Candidate(
-                discountAmount = promotion.calculateDiscount(originalAmount).toInt(),
-                isIssuerPromotion = promotion.isIssuerDrivenPromotion()
-            )
+        if (matchingPromotions.isEmpty()) {
+            return
         }
 
-        val selectedIndices = optimizer.optimize(candidates, originalAmount)
+        val capacity = originalAmount - minPaymentAmount
+        val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, capacity)
 
-        selectedIndices.forEach { index ->
-            val promotion = matchingPromotions[index]
+        optimizedPromotions.forEach { promotion ->
             _effectivePromotions.add(
                 EffectivePromotion(
                     name = promotion.name,
@@ -118,8 +116,12 @@ class Payment(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Payment) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is Payment) {
+            return false
+        }
         return id == other.id
     }
 

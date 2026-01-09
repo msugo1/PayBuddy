@@ -17,12 +17,8 @@ package com.paybuddy.payment.domain
  */
 interface PromotionOptimizer {
     fun optimize(
-        candidates: List<Candidate>,
-        maxDiscount: Long
-    ): List<Int>
-
-    data class Candidate(
-        val discountAmount: Int,
-        val isIssuerPromotion: Boolean
-    )
+        promotions: List<Promotion>,
+        originalAmount: Long,
+        capacity: Long
+    ): List<Promotion>
 }
