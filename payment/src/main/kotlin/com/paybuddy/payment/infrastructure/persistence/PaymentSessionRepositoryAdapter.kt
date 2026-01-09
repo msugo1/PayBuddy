@@ -2,10 +2,10 @@ package com.paybuddy.payment.infrastructure.persistence
 
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.PaymentSessionRepository
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 
-@Repository
-class PaymentSessionRepositoryImpl(
+@Component
+class PaymentSessionRepositoryAdapter(
     private val jpaPaymentSessionRepository: JpaPaymentSessionRepository
 ) : PaymentSessionRepository {
 
