@@ -53,11 +53,12 @@ class Payment(
         get() = _effectivePromotions.toList()
 
     fun submit(cardDetails: CardPaymentDetails) {
+        require(cardPaymentDetails == null) { "이미 결제 수단이 제출되었습니다" }
         cardPaymentDetails = cardDetails
     }
 
     fun fail(errorCode: String, failureReason: String) {
-        requireNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
+        checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
         status = status.transitionTo(PaymentStatus.FAILED)
         cardPaymentDetails = cardPaymentDetails!!.copy(
             result = PaymentResult(errorCode = errorCode, failureReason = failureReason)
@@ -65,14 +66,19 @@ class Payment(
     }
 
     fun requestAuthentication() {
+        checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
         status = status.transitionTo(PaymentStatus.AUTHENTICATION_REQUIRED)
     }
 
     fun completeAuthentication() {
+        check(status == PaymentStatus.AUTHENTICATION_REQUIRED) { "인증 완료는 AUTHENTICATION_REQUIRED 상태에서만 가능합니다" }
+        checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
         status = status.transitionTo(PaymentStatus.PENDING_CONFIRM)
     }
 
     fun completeWithoutAuthentication() {
+        check(status == PaymentStatus.INITIALIZED) { "인증 없이 진행은 INITIALIZED 상태에서만 가능합니다" }
+        checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
         status = status.transitionTo(PaymentStatus.PENDING_CONFIRM)
     }
 

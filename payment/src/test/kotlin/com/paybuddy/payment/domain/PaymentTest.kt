@@ -66,8 +66,82 @@ class PaymentTest {
             // When & Then
             assertThatThrownBy {
                 payment.fail("ERROR", "실패 처리 시도")
+            }.isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `이미 결제 수단이 제출되었으면 중복 제출할 수 없다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+            payment.submit(createCardDetails())
+
+            // When & Then
+            assertThatThrownBy {
+                payment.submit(createCardDetails())
             }.isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessageContaining("결제 수단 정보가 설정되지 않았습니다")
+        }
+    }
+
+    @Nested
+    @DisplayName("인증 처리")
+    inner class AuthenticationTest {
+
+        @Test
+        fun `결제 수단 정보가 없으면 인증을 요청할 수 없다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+
+            // When & Then
+            assertThatThrownBy {
+                payment.requestAuthentication()
+            }.isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `결제 수단 정보가 없으면 인증을 완료할 수 없다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+
+            // When & Then
+            assertThatThrownBy {
+                payment.completeAuthentication()
+            }.isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `결제 수단 정보가 없으면 submit 완료할 수 없다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+
+            // When & Then
+            assertThatThrownBy {
+                payment.completeWithoutAuthentication()
+            }.isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `인증 완료는 AUTHENTICATION_REQUIRED 상태에서만 가능하다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+            payment.submit(createCardDetails())
+
+            // When & Then
+            assertThatThrownBy {
+                payment.completeAuthentication()
+            }.isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `인증 없이 진행은 INITIALIZED 상태에서만 가능하다`() {
+            // Given
+            val payment = createPayment(status = PaymentStatus.INITIALIZED)
+            payment.submit(createCardDetails())
+            payment.requestAuthentication()
+
+            // When & Then
+            assertThatThrownBy {
+                payment.completeWithoutAuthentication()
+            }.isInstanceOf(IllegalStateException::class.java)
         }
     }
 
