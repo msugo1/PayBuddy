@@ -26,9 +26,6 @@ class Payment(
     @Column(nullable = false)
     val originalAmount: Long,
 
-    @Column(nullable = false)
-    val minPaymentAmount: Long = 0,
-
     @JdbcTypeCode(SqlTypes.JSON) @Column(
         name = "effective_promotions",
         columnDefinition = "jsonb"
@@ -57,6 +54,7 @@ class Payment(
 
     fun addEffectivePromotions(
         promotions: List<Promotion>,
+        policy: PaymentPolicy,
         optimizer: PromotionOptimizer
     ) {
         val card = cardPaymentDetails?.card ?: return
@@ -66,7 +64,7 @@ class Payment(
             return
         }
 
-        val capacity = originalAmount - minPaymentAmount
+        val capacity = originalAmount - policy.minPaymentAmount
         val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, capacity)
 
         optimizedPromotions.forEach { promotion ->

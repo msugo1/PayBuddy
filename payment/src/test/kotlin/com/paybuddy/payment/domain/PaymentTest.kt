@@ -28,7 +28,7 @@ class PaymentTest {
         @Test
         fun `프로모션이 적용되면 originalAmount에서 할인이 차감된다`() {
             // Given
-            val payment = createPayment(originalAmount = 10000, minPaymentAmount = 1000)
+            val payment = createPayment(originalAmount = 10000)
             payment.submit(createCardDetails(brand = CardBrand.VISA))
 
             val promotions = listOf(
@@ -40,7 +40,7 @@ class PaymentTest {
             )
 
             // When
-            payment.addEffectivePromotions(promotions, KnapsackPromotionOptimizer())
+            payment.addEffectivePromotions(promotions, DefaultPaymentPolicy(), KnapsackPromotionOptimizer())
 
             // Then
             assertThat(payment.finalAmount).isEqualTo(7000)
@@ -173,16 +173,14 @@ class PaymentTest {
         paymentKey: String = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
         merchantId: String = "mch_123",
         status: PaymentStatus = PaymentStatus.INITIALIZED,
-        originalAmount: Long = 10000,
-        minPaymentAmount: Long = 0
+        originalAmount: Long = 10000
     ): Payment {
         return Payment(
             id = id,
             paymentKey = paymentKey,
             merchantId = merchantId,
             status = status,
-            originalAmount = originalAmount,
-            minPaymentAmount = minPaymentAmount
+            originalAmount = originalAmount
         )
     }
 
@@ -219,7 +217,6 @@ class PaymentTest {
         merchantId: String = "mch_123",
         status: PaymentStatus = PaymentStatus.INITIALIZED,
         originalAmount: Long = 10000,
-        minPaymentAmount: Long = 0,
         cardBrand: CardBrand? = CardBrand.VISA,
         cardType: CardType = CardType.CREDIT,
         issuerCode: String = "04"
@@ -229,8 +226,7 @@ class PaymentTest {
             paymentKey = paymentKey,
             merchantId = merchantId,
             status = status,
-            originalAmount = originalAmount,
-            minPaymentAmount = minPaymentAmount
+            originalAmount = originalAmount
         )
         payment.submit(
             createCardDetails(

@@ -5,7 +5,6 @@ CREATE TABLE payment (
     status VARCHAR(50) NOT NULL,
     version BIGINT NOT NULL DEFAULT 0,
     original_amount BIGINT NOT NULL,
-    min_payment_amount BIGINT NOT NULL DEFAULT 0,
     effective_promotions JSONB,
 
     -- CardPaymentDetails
