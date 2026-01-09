@@ -54,7 +54,7 @@ class Payment(
 
     fun addEffectivePromotions(
         promotions: List<Promotion>,
-        policy: PaymentPolicy,
+        minPaymentAmount: Long,
         optimizer: PromotionOptimizer
     ) {
         val card = cardPaymentDetails?.card ?: return
@@ -64,7 +64,7 @@ class Payment(
             return
         }
 
-        val capacity = originalAmount - policy.minPaymentAmount
+        val capacity = originalAmount - minPaymentAmount
         val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, capacity)
 
         optimizedPromotions.forEach { promotion ->
