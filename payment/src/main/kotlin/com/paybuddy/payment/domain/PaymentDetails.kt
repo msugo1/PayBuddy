@@ -7,6 +7,10 @@ import jakarta.persistence.Embeddable
 import jakarta.persistence.Embedded
 import java.time.OffsetDateTime
 
+// TODO: 가상계좌/간편결제 추가 시 sealed interface PaymentDetails로 리팩토링
+//       - sealed interface PaymentDetails
+//       - CardPaymentDetails, VirtualAccountDetails, EasyPayDetails 등
+//       현재는 1차 카드만 구현하여 단일 클래스로 단순화
 @Embeddable
 data class CardPaymentDetails(
     @Embedded

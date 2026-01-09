@@ -36,16 +36,6 @@ class JpaPaymentRepositoryTest {
             originalAmount = 10000
         )
 
-        // JSONB: effectivePromotions
-        payment.addPromotion(
-            EffectivePromotion(
-                name = "신규 회원 할인",
-                provider = PromotionProvider.PLATFORM,
-                amount = 1000
-            ),
-            minPaymentAmount = 1000
-        )
-
         // @Embeddable: CardPaymentDetails > Card
         val cardDetails = CardPaymentDetails(
             card = Card(
@@ -73,8 +63,8 @@ class JpaPaymentRepositoryTest {
         assertThat(entity).isNotNull
         requireNotNull(entity)
 
-        // JSONB 검증
-        assertThat(entity.finalAmount).isEqualTo(9000)
+        // originalAmount 검증
+        assertThat(entity.finalAmount).isEqualTo(10000)
 
         // @Embeddable Card 검증
         assertThat(entity.cardPaymentDetails?.card?.maskedNumber).isEqualTo("1234-56**-****-7890")

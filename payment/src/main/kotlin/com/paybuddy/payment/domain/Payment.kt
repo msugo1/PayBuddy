@@ -30,7 +30,7 @@ class Payment(
         name = "effective_promotions",
         columnDefinition = "jsonb"
     )
-    private val effectivePromotions: MutableList<EffectivePromotion> = mutableListOf(),
+    private val _effectivePromotions: MutableList<EffectivePromotion> = mutableListOf(),
 
     @Embedded
     var cardPaymentDetails: CardPaymentDetails? = null,
@@ -47,13 +47,10 @@ class Payment(
         private set
 
     val finalAmount: Long
-        get() = originalAmount - effectivePromotions.sumOf { it.amount }
+        get() = originalAmount - _effectivePromotions.sumOf { it.amount }
 
-    fun addPromotion(promotion: EffectivePromotion, minPaymentAmount: Long) {
-        require(promotion.amount > 0) { "프로모션 할인 금액은 0보다 커야 합니다" }
-        require(finalAmount - promotion.amount >= minPaymentAmount) { "할인 적용 후 최종 금액은 최소 ${minPaymentAmount}원 이상이어야 합니다" }
-        effectivePromotions.add(promotion)
-    }
+    val effectivePromotions: List<EffectivePromotion>
+        get() = _effectivePromotions.toList()
 
     fun submit(cardDetails: CardPaymentDetails) {
         cardPaymentDetails = cardDetails
