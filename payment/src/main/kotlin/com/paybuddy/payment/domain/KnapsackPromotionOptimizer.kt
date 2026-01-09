@@ -1,10 +1,7 @@
 package com.paybuddy.payment.domain
 
-import org.springframework.stereotype.Component
-
 /** 동일 할인 합계 시 카드사 프로모션 개수 우선 (고객 체감 혜택 극대화) */
-@Component
-class KnapsackPromotionOptimizer : PromotionOptimizer {
+object KnapsackPromotionOptimizer : PromotionOptimizer {
     override fun optimize(
         promotions: List<Promotion>,
         originalAmount: Long,

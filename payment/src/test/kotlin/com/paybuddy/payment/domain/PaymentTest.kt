@@ -40,7 +40,7 @@ class PaymentTest {
             )
 
             // When
-            payment.addEffectivePromotions(promotions, minPaymentAmount = 1000, KnapsackPromotionOptimizer())
+            payment.addEffectivePromotions(promotions, minPaymentAmount = 1000, KnapsackPromotionOptimizer)
 
             // Then
             assertThat(payment.finalAmount).isEqualTo(7000)
