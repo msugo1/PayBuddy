@@ -29,16 +29,16 @@ class PromotionTest {
         }
 
         @Test
-        fun `적용조건이 하나도 없으면 예외`() {
+        fun `카드 조건이 하나도 없으면 예외`() {
             // When & Then
             assertThatThrownBy {
                 createPromotion(
                     cardBrand = null,
                     cardType = null,
-                    issuerCode = null,
-                    minAmount = null
+                    issuerCode = null
                 )
             }.isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("카드 조건")
         }
     }
 

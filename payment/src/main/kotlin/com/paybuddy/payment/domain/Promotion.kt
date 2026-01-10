@@ -32,8 +32,8 @@ data class Promotion(
             }
         }
 
-        require(cardBrand != null || cardType != null || issuerCode != null || minAmount != null) {
-            "최소 하나의 적용조건이 필요합니다"
+        require(cardBrand != null || cardType != null || issuerCode != null) {
+            "카드 조건(cardBrand, cardType, issuerCode) 중 최소 하나는 필수입니다"
         }
     }
     fun matches(card: Card?, amount: Long): Boolean {
