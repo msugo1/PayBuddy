@@ -5,17 +5,18 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
     override fun optimize(
         promotions: List<Promotion>,
         originalAmount: Long,
-        capacity: Long
+        capacity: Long  // 최대할인가능금액
     ): List<Promotion> {
         if (capacity <= 0L || promotions.isEmpty()) {
             return emptyList()
         }
 
-        val capacityInt = capacity.toInt()
-        val discounts = promotions.map { it.calculateDiscount(originalAmount).toInt() }
+        val discounts = promotions.map {
+            it.calculateDiscount(originalAmount)
+        }
 
-        val optimalPaths = HashMap<Int, Path>(1024)
-        optimalPaths[0] = Path(
+        val optimalPromotionPaths = HashMap<Long, Path>()
+        optimalPromotionPaths[0] = Path(
             issuerPromotionCount = 0,
             prevDiscountSum = null,
             lastPromotionIndex = null
@@ -28,11 +29,11 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
             val issuerDelta = if (promotion.isIssuerDrivenPromotion()) 1 else 0
 
             // snapshot으로 각 프로모션 중복 사용 방지
-            val snapshot = optimalPaths.entries.toList()
+            val snapshot = optimalPromotionPaths.entries.toList()
 
             for ((currentSum, path) in snapshot) {
                 val nextSum = currentSum + discount
-                if (nextSum > capacityInt) {
+                if (nextSum > capacity) {
                     continue
                 }
 
@@ -42,23 +43,23 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
                     lastPromotionIndex = index
                 )
 
-                val existing = optimalPaths[nextSum]
+                val existing = optimalPromotionPaths[nextSum]
 
                 // 동일 할인 시 카드사 프로모션 개수 우선
                 if (existing == null || newPath.issuerPromotionCount > existing.issuerPromotionCount) {
-                    optimalPaths[nextSum] = newPath
+                    optimalPromotionPaths[nextSum] = newPath
                 }
             }
         }
 
-        val maxSum = optimalPaths.keys.maxOrNull() ?: return emptyList()
+        val maxSum = optimalPromotionPaths.keys.maxOrNull() ?: return emptyList()
 
         // 경로 역추적
         val result = mutableListOf<Promotion>()
         var sum = maxSum
 
         while (sum > 0) {
-            val path = optimalPaths[sum] ?: break
+            val path = optimalPromotionPaths[sum] ?: break
             val index = path.lastPromotionIndex ?: break
 
             result.add(promotions[index])
@@ -70,7 +71,7 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
 
     private data class Path(
         val issuerPromotionCount: Int,
-        val prevDiscountSum: Int?,
+        val prevDiscountSum: Long?,
         val lastPromotionIndex: Int?
     )
 }

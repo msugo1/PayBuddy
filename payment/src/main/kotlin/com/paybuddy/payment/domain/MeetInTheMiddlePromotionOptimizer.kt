@@ -11,7 +11,7 @@ package com.paybuddy.payment.domain
  * - DP:   O(10 * 100,000) = 1,000,000 연산
  * - MITM: O(2^5) ≈ 64 연산 (15,000배 빠름!)
  */
-class MeetInTheMiddlePromotionOptimizer : PromotionOptimizer {
+object MeetInTheMiddlePromotionOptimizer : PromotionOptimizer {
     override fun optimize(
         promotions: List<Promotion>,
         originalAmount: Long,

@@ -13,7 +13,7 @@ data class Promotion(
     val name: String,
     val provider: PromotionProvider,
     val discountType: DiscountType,
-    val discountValue: Long,
+    val discountValue: Long,  // FIXED: 할인 금액(원), PERCENTAGE: 할인 비율(%)
     val maxDiscountAmount: Long?,
 
     // 카드 조건 (1차: 카드만 구현)
