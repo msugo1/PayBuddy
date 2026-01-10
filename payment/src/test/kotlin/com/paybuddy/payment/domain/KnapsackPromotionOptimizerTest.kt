@@ -97,9 +97,9 @@ class KnapsackPromotionOptimizerTest {
         fun `동일 할인 금액이면 카드사 프로모션 개수가 많은 조합을 선택한다`() {
             // Given
             val promotions = listOf(
-                // 조합1: promo1 + promo2 = 5000원 (카드사 0개)
+                // 조합1: promo1 + promo2 = 5000원 (카드사 1개)
                 createPromotion(id = "promo1", discountValue = 2000, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "promo2", discountValue = 3000, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "promo2", discountValue = 3000, provider = PromotionProvider.CARD_ISSUER),
                 // 조합2: promo3 + promo4 = 5000원 (카드사 2개)
                 createPromotion(id = "promo3", discountValue = 2000, provider = PromotionProvider.CARD_ISSUER),
                 createPromotion(id = "promo4", discountValue = 3000, provider = PromotionProvider.CARD_ISSUER)
@@ -115,7 +115,7 @@ class KnapsackPromotionOptimizerTest {
             // Then
             val totalDiscount = result.sumOf { it.calculateDiscount(10000) }
             assertThat(totalDiscount).isEqualTo(5000)
-            assertThat(result.all { it.isIssuerDrivenPromotion() }).isTrue()
+            assertThat(result.count { it.isIssuerDrivenPromotion() }).isEqualTo(2)
         }
 
         @Test
@@ -147,19 +147,19 @@ class KnapsackPromotionOptimizerTest {
             // Given
             val promotions = listOf(
                 createPromotion(id = "issuer", discountValue = 3000, provider = PromotionProvider.CARD_ISSUER),
-                createPromotion(id = "platform", discountValue = 5000, provider = PromotionProvider.PLATFORM)
+                createPromotion(id = "platform", discountValue = 3001, provider = PromotionProvider.PLATFORM)
             )
 
-            // When (최대 할인 가능금액 = 5000)
+            // When (최대 할인 가능금액 = 3001)
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                maxDiscountLimit = 5000
+                maxDiscountLimit = 3001
             )
 
-            // Then (할인 금액이 더 큰 플랫폼 선택)
+            // Then (할인 금액이 1원이라도 더 큰 플랫폼 선택)
             val totalDiscount = result.sumOf { it.calculateDiscount(10000) }
-            assertThat(totalDiscount).isEqualTo(5000)
+            assertThat(totalDiscount).isEqualTo(3001)
             assertThat(result.count { it.isIssuerDrivenPromotion() }).isEqualTo(0)
         }
     }

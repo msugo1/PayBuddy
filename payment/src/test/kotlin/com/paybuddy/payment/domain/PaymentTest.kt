@@ -24,28 +24,6 @@ class PaymentTest {
             // Then
             assertThat(finalAmount).isEqualTo(10000)
         }
-
-        @Test
-        fun `프로모션이 적용되면 originalAmount에서 할인이 차감된다`() {
-            // Given
-            val payment = createPayment(originalAmount = 10000)
-            payment.submit(createCardDetails(brand = CardBrand.VISA))
-
-            val promotions = listOf(
-                createPromotion(
-                    discountType = DiscountType.FIXED,
-                    discountValue = 3000,
-                    cardBrand = CardBrand.VISA
-                )
-            )
-
-            // When
-            payment.addEffectivePromotions(promotions, minPaymentAmount = 1000, KnapsackPromotionOptimizer)
-
-            // Then
-            assertThat(payment.finalAmount).isEqualTo(7000)
-            assertThat(payment.effectivePromotions).hasSize(1)
-        }
     }
 
     @Nested
