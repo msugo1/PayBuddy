@@ -57,7 +57,8 @@ class Payment(
         minPaymentAmount: Long,
         optimizer: PromotionOptimizer
     ) {
-        val card = cardPaymentDetails?.card ?: return
+        val cardDetails = checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
+        val card = cardDetails.card
 
         val matchingPromotions = promotions.filter { it.matches(card, originalAmount) }
         if (matchingPromotions.isEmpty()) {
