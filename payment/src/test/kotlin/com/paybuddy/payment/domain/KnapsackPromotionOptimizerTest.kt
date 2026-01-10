@@ -31,7 +31,7 @@ class KnapsackPromotionOptimizerTest {
         }
 
         @ParameterizedTest
-        @ValueSource(longs = [0, -100, -1000])
+        @ValueSource(longs = [0, -1])
         fun `최대 할인 가능금액이 0 이하면 빈 리스트를 반환한다`(maxDiscountLimit: Long) {
             // Given
             val promotions = listOf(createPromotion(discountValue = 1000))
@@ -55,9 +55,9 @@ class KnapsackPromotionOptimizerTest {
         @Test
         fun `단일 프로모션이 최대 할인 가능금액을 초과하면 빈 리스트를 반환한다`() {
             // Given
-            val promotion = createPromotion(discountValue = 6000)
+            val promotion = createPromotion(discountValue = 5001)
 
-            // When (최대 할인 가능금액 = 5000)
+            // When (최대 할인 가능금액 = 5000, 1원 초과)
             val result = KnapsackPromotionOptimizer.optimize(
                 listOf(promotion),
                 originalAmount = 10000,
@@ -77,11 +77,11 @@ class KnapsackPromotionOptimizerTest {
                 createPromotion(id = "p3", discountValue = 5000)
             )
 
-            // When (최대 할인 가능금액 = 2000, 모든 프로모션이 초과)
+            // When (최대 할인 가능금액 = 2999, 모든 프로모션이 1원 이상 초과)
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                maxDiscountLimit = 2000
+                maxDiscountLimit = 2999
             )
 
             // Then
