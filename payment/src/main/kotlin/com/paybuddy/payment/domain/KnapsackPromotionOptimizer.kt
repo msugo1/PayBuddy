@@ -5,9 +5,9 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
     override fun optimize(
         promotions: List<Promotion>,
         originalAmount: Long,
-        capacity: Long  // 최대할인가능금액
+        maxDiscountLimit: Long  // 최대할인가능금액
     ): List<Promotion> {
-        if (capacity <= 0L || promotions.isEmpty()) {
+        if (maxDiscountLimit <= 0L || promotions.isEmpty()) {
             return emptyList()
         }
 
@@ -33,7 +33,7 @@ object KnapsackPromotionOptimizer : PromotionOptimizer {
 
             for ((currentSum, path) in snapshot) {
                 val nextSum = currentSum + discount
-                if (nextSum > capacity) {
+                if (nextSum > maxDiscountLimit) {
                     continue
                 }
 

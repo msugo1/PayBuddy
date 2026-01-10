@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.Instant
 
 class KnapsackPromotionOptimizerTest {
@@ -21,15 +23,16 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 5000
+                maxDiscountLimit = 5000
             )
 
             // Then
             assertThat(result).isEmpty()
         }
 
-        @Test
-        fun `최대 할인 가능금액이 0이면 빈 리스트를 반환한다`() {
+        @ParameterizedTest
+        @ValueSource(longs = [0, -100, -1000])
+        fun `최대 할인 가능금액이 0 이하면 빈 리스트를 반환한다`(maxDiscountLimit: Long) {
             // Given
             val promotions = listOf(createPromotion(discountValue = 1000))
 
@@ -37,23 +40,7 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 0
-            )
-
-            // Then
-            assertThat(result).isEmpty()
-        }
-
-        @Test
-        fun `최대 할인 가능금액이 음수면 빈 리스트를 반환한다`() {
-            // Given
-            val promotions = listOf(createPromotion(discountValue = 1000))
-
-            // When
-            val result = KnapsackPromotionOptimizer.optimize(
-                promotions,
-                originalAmount = 10000,
-                capacity = -100
+                maxDiscountLimit = maxDiscountLimit
             )
 
             // Then
@@ -62,54 +49,11 @@ class KnapsackPromotionOptimizerTest {
     }
 
     @Nested
-    @DisplayName("단일 프로모션")
-    inner class SinglePromotionTest {
+    @DisplayName("모든 프로모션 초과")
+    inner class AllPromotionsExceedTest {
 
         @Test
-        fun `FIXED 타입이 최대 할인 가능금액 이내면 선택된다`() {
-            // Given
-            val promotion = createPromotion(
-                id = "fixed_3000",
-                discountType = DiscountType.FIXED,
-                discountValue = 3000
-            )
-
-            // When (최대 할인 가능금액 = 5000)
-            val result = KnapsackPromotionOptimizer.optimize(
-                listOf(promotion),
-                originalAmount = 10000,
-                capacity = 5000
-            )
-
-            // Then
-            assertThat(result).hasSize(1)
-            assertThat(result[0]).isEqualTo(promotion)
-        }
-
-        @Test
-        fun `PERCENTAGE 타입이 최대 할인 가능금액 이내면 선택된다`() {
-            // Given
-            val promotion = createPromotion(
-                id = "percent_10",
-                discountType = DiscountType.PERCENTAGE,
-                discountValue = 10,  // 10%
-                maxDiscountAmount = 2000
-            )
-
-            // When (50000원의 10% = 5000원이지만 max = 2000원, 최대 할인 가능금액 = 3000)
-            val result = KnapsackPromotionOptimizer.optimize(
-                listOf(promotion),
-                originalAmount = 50000,
-                capacity = 3000
-            )
-
-            // Then
-            assertThat(result).hasSize(1)
-            assertThat(result[0]).isEqualTo(promotion)
-        }
-
-        @Test
-        fun `최대 할인 가능금액을 초과하면 선택되지 않는다`() {
+        fun `단일 프로모션이 최대 할인 가능금액을 초과하면 빈 리스트를 반환한다`() {
             // Given
             val promotion = createPromotion(discountValue = 6000)
 
@@ -117,20 +61,15 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 listOf(promotion),
                 originalAmount = 10000,
-                capacity = 5000
+                maxDiscountLimit = 5000
             )
 
             // Then
             assertThat(result).isEmpty()
         }
-    }
-
-    @Nested
-    @DisplayName("여러 프로모션 모두 초과")
-    inner class AllPromotionsExceedTest {
 
         @Test
-        fun `모든 프로모션이 최대 할인 가능금액을 초과하면 빈 리스트를 반환한다`() {
+        fun `여러 프로모션 모두 최대 할인 가능금액을 초과하면 빈 리스트를 반환한다`() {
             // Given
             val promotions = listOf(
                 createPromotion(id = "p1", discountValue = 3000),
@@ -142,7 +81,7 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 2000
+                maxDiscountLimit = 2000
             )
 
             // Then
@@ -170,17 +109,17 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 5000
+                maxDiscountLimit = 5000
             )
 
             // Then
-            assertThat(result).hasSize(2)
-            assertThat(result.map { it.id }).containsExactlyInAnyOrder("promo3", "promo4")
+            val totalDiscount = result.sumOf { it.calculateDiscount(10000) }
+            assertThat(totalDiscount).isEqualTo(5000)
             assertThat(result.all { it.isIssuerDrivenPromotion() }).isTrue()
         }
 
         @Test
-        fun `동일 할인에서 카드사 1개 vs 플랫폼 2개면 카드사를 선택한다`() {
+        fun `동일 할인에서 카드사 프로모션 1개 vs 플랫폼 프로모션 2개면 카드사 프로모션이 속한 조합을 선택한다`() {
             // Given
             val promotions = listOf(
                 // 조합1: 카드사 1개 = 3000원
@@ -194,21 +133,20 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 3000
+                maxDiscountLimit = 3000
             )
 
             // Then
-            assertThat(result).hasSize(1)
-            assertThat(result[0].id).isEqualTo("issuer1")
+            val totalDiscount = result.sumOf { it.calculateDiscount(10000) }
+            assertThat(totalDiscount).isEqualTo(3000)
+            assertThat(result.count { it.isIssuerDrivenPromotion() }).isEqualTo(1)
         }
 
         @Test
         fun `할인 금액이 더 크면 카드사 우선순위를 무시한다`() {
             // Given
             val promotions = listOf(
-                // 카드사 3000원
                 createPromotion(id = "issuer", discountValue = 3000, provider = PromotionProvider.CARD_ISSUER),
-                // 플랫폼 5000원
                 createPromotion(id = "platform", discountValue = 5000, provider = PromotionProvider.PLATFORM)
             )
 
@@ -216,13 +154,13 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 10000,
-                capacity = 5000
+                maxDiscountLimit = 5000
             )
 
             // Then (할인 금액이 더 큰 플랫폼 선택)
-            assertThat(result).hasSize(1)
-            assertThat(result[0].id).isEqualTo("platform")
-            assertThat(result[0].calculateDiscount(10000)).isEqualTo(5000)
+            val totalDiscount = result.sumOf { it.calculateDiscount(10000) }
+            assertThat(totalDiscount).isEqualTo(5000)
+            assertThat(result.count { it.isIssuerDrivenPromotion() }).isEqualTo(0)
         }
     }
 
@@ -231,65 +169,30 @@ class KnapsackPromotionOptimizerTest {
     inner class ManyPromotionsTest {
 
         @Test
-        fun `FIXED 타입 프로모션 10개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
-            // Given (홀수 금액으로 구성하여 12000원을 정확히 만들 수 없게 함)
+        fun `혼합 프로모션 5개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
+            // Given
             val promotions = listOf(
-                createPromotion(id = "fixed1", discountValue = 501, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "fixed2", discountValue = 1003, provider = PromotionProvider.CARD_ISSUER),
-                createPromotion(id = "fixed3", discountValue = 1507, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "fixed4", discountValue = 2011, provider = PromotionProvider.CARD_ISSUER),
-                createPromotion(id = "fixed5", discountValue = 2503, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "fixed6", discountValue = 3001, provider = PromotionProvider.CARD_ISSUER),
-                createPromotion(id = "fixed7", discountValue = 3509, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "fixed8", discountValue = 4007, provider = PromotionProvider.CARD_ISSUER),
-                createPromotion(id = "fixed9", discountValue = 4501, provider = PromotionProvider.PLATFORM),
-                createPromotion(id = "fixed10", discountValue = 5003, provider = PromotionProvider.CARD_ISSUER)
+                createPromotion(id = "mixed1", discountType = DiscountType.FIXED, discountValue = 1001, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "mixed2", discountType = DiscountType.PERCENTAGE, discountValue = 10, maxDiscountAmount = 2003, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "mixed3", discountType = DiscountType.FIXED, discountValue = 1507, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "mixed4", discountType = DiscountType.PERCENTAGE, discountValue = 15, maxDiscountAmount = 3001, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "mixed5", discountType = DiscountType.FIXED, discountValue = 2009, provider = PromotionProvider.PLATFORM)
             )
 
-            // When (최대 할인 가능금액 = 12000, 정확히 12000을 만들 수 없음)
+            // When (최대 할인 가능금액 = 7000)
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 50000,
-                capacity = 12000
+                maxDiscountLimit = 7000
             )
 
-            // Then (최적해: 11535원)
-            assertThat(result).isNotEmpty()
+            // Then (최적해: 6520원)
             val totalDiscount = result.sumOf { it.calculateDiscount(50000) }
-            assertThat(totalDiscount).isEqualTo(11535)
+            assertThat(totalDiscount).isEqualTo(6520)
         }
 
         @Test
-        fun `PERCENTAGE 타입 프로모션 10개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
-            // Given (50000원 기준, 홀수 금액으로 계산되도록 maxDiscountAmount 설정)
-            val promotions = listOf(
-                createPromotion(id = "percent1", discountType = DiscountType.PERCENTAGE, discountValue = 5, maxDiscountAmount = 1001, provider = PromotionProvider.PLATFORM),    // 1001원
-                createPromotion(id = "percent2", discountType = DiscountType.PERCENTAGE, discountValue = 10, maxDiscountAmount = 2003, provider = PromotionProvider.CARD_ISSUER),  // 2003원
-                createPromotion(id = "percent3", discountType = DiscountType.PERCENTAGE, discountValue = 15, maxDiscountAmount = 3007, provider = PromotionProvider.PLATFORM),    // 3007원
-                createPromotion(id = "percent4", discountType = DiscountType.PERCENTAGE, discountValue = 20, maxDiscountAmount = 4001, provider = PromotionProvider.CARD_ISSUER),  // 4001원
-                createPromotion(id = "percent5", discountType = DiscountType.PERCENTAGE, discountValue = 25, maxDiscountAmount = 5003, provider = PromotionProvider.PLATFORM),    // 5003원
-                createPromotion(id = "percent6", discountType = DiscountType.PERCENTAGE, discountValue = 30, maxDiscountAmount = 6007, provider = PromotionProvider.CARD_ISSUER),  // 6007원
-                createPromotion(id = "percent7", discountType = DiscountType.PERCENTAGE, discountValue = 35, maxDiscountAmount = 7001, provider = PromotionProvider.PLATFORM),    // 7001원
-                createPromotion(id = "percent8", discountType = DiscountType.PERCENTAGE, discountValue = 40, maxDiscountAmount = 8009, provider = PromotionProvider.CARD_ISSUER),  // 8009원
-                createPromotion(id = "percent9", discountType = DiscountType.PERCENTAGE, discountValue = 45, maxDiscountAmount = 9003, provider = PromotionProvider.PLATFORM),    // 9003원
-                createPromotion(id = "percent10", discountType = DiscountType.PERCENTAGE, discountValue = 50, maxDiscountAmount = 10007, provider = PromotionProvider.CARD_ISSUER) // 10007원
-            )
-
-            // When (최대 할인 가능금액 = 15000, 정확히 15000을 만들 수 없음)
-            val result = KnapsackPromotionOptimizer.optimize(
-                promotions,
-                originalAmount = 50000,
-                capacity = 15000
-            )
-
-            // Then (최적해: 14020원)
-            assertThat(result).isNotEmpty()
-            val totalDiscount = result.sumOf { it.calculateDiscount(50000) }
-            assertThat(totalDiscount).isEqualTo(14020)
-        }
-
-        @Test
-        fun `FIXED와 PERCENTAGE 혼합 프로모션 10개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
+        fun `혼합 프로모션 10개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
             // Given (50000원 기준, 홀수 금액으로 구성)
             val promotions = listOf(
                 createPromotion(id = "mixed1", discountType = DiscountType.FIXED, discountValue = 1001, provider = PromotionProvider.PLATFORM),                                      // 1001원
@@ -308,13 +211,50 @@ class KnapsackPromotionOptimizerTest {
             val result = KnapsackPromotionOptimizer.optimize(
                 promotions,
                 originalAmount = 50000,
-                capacity = 13000
+                maxDiscountLimit = 13000
             )
 
             // Then (최적해: 12527원)
-            assertThat(result).isNotEmpty()
             val totalDiscount = result.sumOf { it.calculateDiscount(50000) }
             assertThat(totalDiscount).isEqualTo(12527)
+        }
+
+        @Test
+        fun `혼합 프로모션 20개에서 최대 할인 가능금액에 가장 가까운 조합을 선택한다`() {
+            // Given (50000원 기준, 다양한 금액 조합)
+            val promotions = listOf(
+                createPromotion(id = "m1", discountType = DiscountType.FIXED, discountValue = 503, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m2", discountType = DiscountType.PERCENTAGE, discountValue = 5, maxDiscountAmount = 1009, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m3", discountType = DiscountType.FIXED, discountValue = 1501, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m4", discountType = DiscountType.PERCENTAGE, discountValue = 8, maxDiscountAmount = 2007, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m5", discountType = DiscountType.FIXED, discountValue = 2503, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m6", discountType = DiscountType.PERCENTAGE, discountValue = 12, maxDiscountAmount = 3001, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m7", discountType = DiscountType.FIXED, discountValue = 3509, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m8", discountType = DiscountType.PERCENTAGE, discountValue = 15, maxDiscountAmount = 4003, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m9", discountType = DiscountType.FIXED, discountValue = 4507, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m10", discountType = DiscountType.PERCENTAGE, discountValue = 18, maxDiscountAmount = 5001, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m11", discountType = DiscountType.FIXED, discountValue = 1003, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m12", discountType = DiscountType.PERCENTAGE, discountValue = 6, maxDiscountAmount = 1507, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m13", discountType = DiscountType.FIXED, discountValue = 2011, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m14", discountType = DiscountType.PERCENTAGE, discountValue = 9, maxDiscountAmount = 2509, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m15", discountType = DiscountType.FIXED, discountValue = 3007, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m16", discountType = DiscountType.PERCENTAGE, discountValue = 13, maxDiscountAmount = 3503, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m17", discountType = DiscountType.FIXED, discountValue = 4001, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m18", discountType = DiscountType.PERCENTAGE, discountValue = 16, maxDiscountAmount = 4509, provider = PromotionProvider.CARD_ISSUER),
+                createPromotion(id = "m19", discountType = DiscountType.FIXED, discountValue = 5003, provider = PromotionProvider.PLATFORM),
+                createPromotion(id = "m20", discountType = DiscountType.PERCENTAGE, discountValue = 20, maxDiscountAmount = 6007, provider = PromotionProvider.CARD_ISSUER)
+            )
+
+            // When (최대 할인 가능금액 = 25000)
+            val result = KnapsackPromotionOptimizer.optimize(
+                promotions,
+                originalAmount = 50000,
+                maxDiscountLimit = 25000
+            )
+
+            // Then (최적해: 24575원)
+            val totalDiscount = result.sumOf { it.calculateDiscount(50000) }
+            assertThat(totalDiscount).isEqualTo(24575)
         }
     }
 

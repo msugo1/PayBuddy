@@ -21,12 +21,12 @@ interface PromotionOptimizer {
      *
      * @param promotions 선택 가능한 프로모션 목록 (이미 매칭 조건을 만족하는 프로모션만 전달됨)
      * @param originalAmount 원 결제 금액 (PERCENTAGE 타입 할인 계산에 사용)
-     * @param capacity 최대할인가능금액 (= originalAmount - minPaymentAmount)
-     * @return 최적화된 프로모션 조합 (할인 합계가 capacity 이하이면서 최대가 되는 조합)
+     * @param maxDiscountLimit 최대할인가능금액 (= originalAmount - minPaymentAmount)
+     * @return 최적화된 프로모션 조합 (할인 합계가 maxDiscountLimit 이하이면서 최대가 되는 조합)
      */
     fun optimize(
         promotions: List<Promotion>,
         originalAmount: Long,
-        capacity: Long
+        maxDiscountLimit: Long
     ): List<Promotion>
 }

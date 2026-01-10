@@ -64,8 +64,8 @@ class Payment(
             return
         }
 
-        val capacity = originalAmount - minPaymentAmount
-        val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, capacity)
+        val maxDiscountLimit = originalAmount - minPaymentAmount
+        val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, maxDiscountLimit)
 
         optimizedPromotions.forEach { promotion ->
             _effectivePromotions.add(
