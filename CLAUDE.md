@@ -13,6 +13,20 @@
 - **간결하게**: 설명 필요한 경우만 body 작성
 - **types**: feat, fix, docs, refactor, test, chore
 
+## 코딩 컨벤션
+
+### 제어문
+- **if-else는 항상 중괄호 사용**: 단일 표현식이라도 `{ }` 필수
+```kotlin
+// ✅ 올바른 방식
+if (condition) {
+    return true
+}
+
+// ❌ 금지
+if (condition) return true
+```
+
 ## 단위 테스트 가이드
 
 ### 테스트 범위

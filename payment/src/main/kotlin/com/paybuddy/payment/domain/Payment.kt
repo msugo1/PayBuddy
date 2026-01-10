@@ -52,6 +52,33 @@ class Payment(
     val effectivePromotions: List<EffectivePromotion>
         get() = _effectivePromotions.toList()
 
+    fun addEffectivePromotions(
+        promotions: List<Promotion>,
+        minPaymentAmount: Long,
+        optimizer: PromotionOptimizer
+    ) {
+        val cardDetails = checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
+        val card = cardDetails.card
+
+        val matchingPromotions = promotions.filter { it.matches(card, originalAmount) }
+        if (matchingPromotions.isEmpty()) {
+            return
+        }
+
+        val maxDiscountLimit = originalAmount - minPaymentAmount
+        val optimizedPromotions = optimizer.optimize(matchingPromotions, originalAmount, maxDiscountLimit)
+
+        optimizedPromotions.forEach { promotion ->
+            _effectivePromotions.add(
+                EffectivePromotion(
+                    name = promotion.name,
+                    provider = promotion.provider,
+                    amount = promotion.calculateDiscount(originalAmount)
+                )
+            )
+        }
+    }
+
     fun submit(cardDetails: CardPaymentDetails) {
         require(cardPaymentDetails == null) { "이미 결제 수단이 제출되었습니다" }
         cardPaymentDetails = cardDetails
@@ -88,8 +115,12 @@ class Payment(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Payment) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is Payment) {
+            return false
+        }
         return id == other.id
     }
 
