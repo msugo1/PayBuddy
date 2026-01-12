@@ -22,7 +22,7 @@ class FraudDetectionServiceTest {
     private val sut: FraudDetectionService = FraudDetectionService(rules)
 
     @Test
-    fun `국내 발급 카드는 FDS를 통과한다`() {
+    fun `허용된 국가의 카드는 FDS를 통과한다`() {
         // Given
         val card = createCard(issuedCountry = "KR")
 
@@ -33,7 +33,7 @@ class FraudDetectionServiceTest {
     }
 
     @Test
-    fun `해외 발급 카드는 차단된다`() {
+    fun `허용되지 않은 국가의 카드는 차단된다`() {
         // Given
         val card = createCard(issuedCountry = "US")
 
