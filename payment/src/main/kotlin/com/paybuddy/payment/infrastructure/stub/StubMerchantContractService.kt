@@ -11,7 +11,7 @@ import java.time.LocalDate
 
 @Service
 class StubMerchantContractService : MerchantContractService {
-    override fun getContract(merchantId: String): MerchantContract {
+    override fun getActiveContract(merchantId: String): MerchantContract {
         return MerchantContract(
             merchantId = merchantId,
             status = MerchantStatus.ACTIVE,
