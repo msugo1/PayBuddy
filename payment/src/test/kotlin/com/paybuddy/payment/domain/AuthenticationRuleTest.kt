@@ -1,68 +1,51 @@
 package com.paybuddy.payment.domain
 
+import com.paybuddy.payment.domain.authentication.AuthenticationPolicyProvider
+import com.paybuddy.payment.domain.authentication.AuthenticationRule
 import com.paybuddy.payment.infrastructure.stub.StubAuthenticationRule
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 class AuthenticationRuleTest {
 
-    private val sut: AuthenticationRule = StubAuthenticationRule()
+    private val policyProvider = object : AuthenticationPolicyProvider {
+        override fun getHighAmountThreshold(): Long = 300_000L
+        override fun getExemptionCountries(): Set<String> = setOf("KR")
+    }
 
-    @Test
-    fun `해외 발급 카드는 금액과 무관하게 인증이 필요하다`() {
+    private val sut: AuthenticationRule = StubAuthenticationRule(policyProvider)
+
+    @ParameterizedTest
+    @CsvSource(
+        // 인증 필요
+        "US, 10000",      // 면제되지 않은 국가 - 소액
+        "US, 300000",     // 면제되지 않은 국가 - 고액
+        "KR, 300000"      // 면제 국가 - 기준 금액 이상 (경계값)
+    )
+    fun `인증이 필요하다`(issuedCountry: String, amount: Long) {
         // Given
-        val card = createCard(issuedCountry = "US")
+        val card = createCard(issuedCountry)
 
         // When
-        val result = sut.requiresAuthentication(card, 10_000, "mch_123")
+        val result = sut.requiresAuthentication(card, amount, "mch_123")
 
         // Then
         assertThat(result).isTrue()
     }
 
-    @Test
-    fun `국내 카드로 30만원 이상 결제 시 인증이 필요하다`() {
+    @ParameterizedTest
+    @CsvSource(
+        // 인증 불필요
+        "KR, 299999",    // 면제 국가 - 기준 금액 미만 (경계값)
+        "KR, 50000"      // 면제 국가 - 소액
+    )
+    fun `인증이 불필요하다`(issuedCountry: String, amount: Long) {
         // Given
-        val card = createCard(issuedCountry = "KR")
+        val card = createCard(issuedCountry)
 
         // When
-        val result = sut.requiresAuthentication(card, 300_000, "mch_123")
-
-        // Then
-        assertThat(result).isTrue()
-    }
-
-    @Test
-    fun `국내 카드로 30만원 미만 결제 시 인증이 불필요하다`() {
-        // Given
-        val card = createCard(issuedCountry = "KR")
-
-        // When
-        val result = sut.requiresAuthentication(card, 299_999, "mch_123")
-
-        // Then
-        assertThat(result).isFalse()
-    }
-
-    @Test
-    fun `국내 카드로 정확히 30만원 결제 시 인증이 필요하다`() {
-        // Given
-        val card = createCard(issuedCountry = "KR")
-
-        // When
-        val result = sut.requiresAuthentication(card, 300_000, "mch_123")
-
-        // Then
-        assertThat(result).isTrue()
-    }
-
-    @Test
-    fun `국내 카드로 소액 결제 시 인증이 불필요하다`() {
-        // Given
-        val card = createCard(issuedCountry = "KR")
-
-        // When
-        val result = sut.requiresAuthentication(card, 50_000, "mch_123")
+        val result = sut.requiresAuthentication(card, amount, "mch_123")
 
         // Then
         assertThat(result).isFalse()

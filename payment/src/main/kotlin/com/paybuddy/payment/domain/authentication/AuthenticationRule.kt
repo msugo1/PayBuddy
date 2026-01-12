@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.authentication
+
+import com.paybuddy.payment.domain.Card
 
 /**
  * 결제 인증 필요 여부 판단 규칙
