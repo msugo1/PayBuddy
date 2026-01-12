@@ -39,7 +39,10 @@ class JpaPaymentRepositoryTest {
         // @Embeddable: CardPaymentDetails > Card
         val cardDetails = CardPaymentDetails(
             card = Card(
-                maskedNumber = "1234-56**-****-7890",
+                maskedNumber = "1234********7890",
+                expiryMonth = 12,
+                expiryYear = 25,
+                holderName = null,
                 bin = "123456",
                 brand = CardBrand.VISA,
                 issuerCode = "04",
@@ -49,7 +52,7 @@ class JpaPaymentRepositoryTest {
                 issuedCountry = "KR",
                 productCode = null
             ),
-            installmentMonths = 0
+            installment = null
         )
 
         payment.submit(cardDetails)
@@ -67,7 +70,7 @@ class JpaPaymentRepositoryTest {
         assertThat(entity.finalAmount).isEqualTo(10000)
 
         // @Embeddable Card 검증
-        assertThat(entity.cardPaymentDetails?.card?.maskedNumber).isEqualTo("1234-56**-****-7890")
+        assertThat(entity.cardPaymentDetails?.card?.maskedNumber).isEqualTo("1234********7890")
         assertThat(entity.cardPaymentDetails?.card?.brand).isEqualTo(CardBrand.VISA)
         assertThat(entity.cardPaymentDetails?.card?.cardType).isEqualTo(CardType.CREDIT)
         assertThat(entity.cardPaymentDetails?.card?.ownerType).isEqualTo(OwnerType.PERSONAL)
