@@ -7,9 +7,17 @@ import org.junit.jupiter.api.Test
 
 class FraudDetectionServiceTest {
 
+    private val allowedCountryProvider = object : AllowedCountryProvider {
+        override fun getAllowedCountries() = setOf("KR")
+    }
+
+    private val velocityLimitProvider = object : VelocityLimitProvider {
+        override fun getMaxTransactionsPerMinute() = 5
+    }
+
     private val rules = listOf(
-        CountryBlockRule(),
-        VelocityRule()
+        CountryBlockRule(allowedCountryProvider),
+        VelocityRule(velocityLimitProvider)
     )
     private val sut: FraudDetectionService = FraudDetectionService(rules)
 
@@ -33,7 +41,7 @@ class FraudDetectionServiceTest {
         assertThatThrownBy {
             sut.check("mch_123", card, 10000)
         }.isInstanceOf(FraudDetectedException::class.java)
-            .hasFieldOrPropertyWithValue("reason", "COUNTRY_BLOCKED")
+            .hasFieldOrPropertyWithValue("reason", "COUNTRY_NOT_ALLOWED")
     }
 
     private fun createCard(issuedCountry: String = "KR"): Card {

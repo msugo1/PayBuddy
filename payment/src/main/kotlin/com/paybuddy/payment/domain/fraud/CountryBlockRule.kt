@@ -1,7 +1,6 @@
 package com.paybuddy.payment.domain.fraud
 
 import com.paybuddy.payment.domain.Card
-
 import org.springframework.stereotype.Component
 
 /**
@@ -10,17 +9,17 @@ import org.springframework.stereotype.Component
  * 허용된 국가에서 발급된 카드만 사용 가능
  */
 @Component
-class CountryBlockRule : FraudDetectionRule {
-
-    companion object {
-        private val ALLOWED_COUNTRIES = setOf("KR")
-    }
+class CountryBlockRule(
+    private val allowedCountryProvider: AllowedCountryProvider
+) : FraudDetectionRule {
 
     override fun check(merchantId: String, card: Card, amount: Long) {
-        if (card.issuedCountry !in ALLOWED_COUNTRIES) {
+        val allowedCountries = allowedCountryProvider.getAllowedCountries()
+
+        if (card.issuedCountry !in allowedCountries) {
             throw FraudDetectedException(
-                reason = "COUNTRY_BLOCKED",
-                message = "해외 발급 카드는 사용할 수 없습니다: ${card.issuedCountry}"
+                reason = "COUNTRY_NOT_ALLOWED",
+                message = "허용되지 않은 국가에서 발급된 카드입니다: ${card.issuedCountry}"
             )
         }
     }
