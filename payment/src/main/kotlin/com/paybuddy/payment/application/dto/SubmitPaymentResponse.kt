@@ -1,8 +1,5 @@
 package com.paybuddy.payment.application.dto
 
-/**
- * Submit 응답
- */
 data class SubmitPaymentResponse(
     val paymentKey: String,
     val status: SubmitStatus,
