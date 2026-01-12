@@ -33,3 +33,6 @@ spring:
 payment:
   gate:
     lock-ttl-seconds: 5
+  authentication:
+    exemption-countries: KR
+    high-amount-threshold: 300000
