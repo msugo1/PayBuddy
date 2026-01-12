@@ -165,6 +165,46 @@ class InstallmentCalculatorTest {
         )
     }
 
+    @Test
+    fun `발급사 최소 금액보다 작으면 할부가 불가능하다`() {
+        // Given
+        val merchantPolicy = createMerchantPolicy(supportsInstallment = true, minInstallmentAmount = 50_000, availableMonths = setOf(2, 3, 6, 12))
+        val issuerPolicy = createIssuerPolicy(
+            availableMonths = setOf(2, 3, 6, 12),
+            interestFreeMonths = setOf(2, 3),
+            minInstallmentAmount = 100_000
+        )
+
+        // When
+        val options = sut.calculateAvailableOptions(merchantPolicy, issuerPolicy, CardType.CREDIT, 80_000)
+
+        // Then
+        assertThat(options).isEqualTo(InstallmentOptions.UNAVAILABLE)
+    }
+
+    @Test
+    fun `가맹점과 발급사 중 더 큰 최소 금액을 적용한다`() {
+        // Given
+        val merchantPolicy = createMerchantPolicy(supportsInstallment = true, minInstallmentAmount = 50_000, availableMonths = setOf(2, 3, 6, 12))
+        val issuerPolicy = createIssuerPolicy(
+            availableMonths = setOf(2, 3, 6, 12),
+            interestFreeMonths = setOf(2, 3),
+            minInstallmentAmount = 100_000  // 가맹점(50,000)보다 큼
+        )
+
+        // When
+        val options = sut.calculateAvailableOptions(merchantPolicy, issuerPolicy, CardType.CREDIT, 100_000)
+
+        // Then
+        assertThat(options).isEqualTo(
+            InstallmentOptions(
+                supported = true,
+                availableMonths = setOf(2, 3, 6, 12),
+                interestFreeMonths = setOf(2, 3)
+            )
+        )
+    }
+
     private fun createMerchantPolicy(
         supportsInstallment: Boolean,
         minInstallmentAmount: Long,
@@ -180,12 +220,14 @@ class InstallmentCalculatorTest {
 
     private fun createIssuerPolicy(
         availableMonths: Set<Int>,
-        interestFreeMonths: Set<Int>
+        interestFreeMonths: Set<Int>,
+        minInstallmentAmount: Long = 0
     ): IssuerInstallmentPolicy {
         return IssuerInstallmentPolicy(
             issuerCode = "04",
             availableMonths = availableMonths,
-            interestFreeMonths = interestFreeMonths
+            interestFreeMonths = interestFreeMonths,
+            minInstallmentAmount = minInstallmentAmount
         )
     }
 }

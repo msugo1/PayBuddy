@@ -11,13 +11,19 @@ class InstallmentCalculator {
         merchantPolicy: MerchantInstallmentPolicy,
         issuerPolicy: IssuerInstallmentPolicy,
         cardType: CardType,
-        paymentRequestAmount: Long
+        finalPaymentAmount: Long
     ): InstallmentOptions {
         if (cardType != CardType.CREDIT) {
             return InstallmentOptions.UNAVAILABLE
         }
 
-        if (!merchantPolicy.supportsInstallment(paymentRequestAmount)) {
+        // 가맹점과 발급사 정책 중 더 큰 값 적용 (둘 다 만족해야 함)
+        val effectiveMinAmount = maxOf(
+            merchantPolicy.minInstallmentAmount,
+            issuerPolicy.minInstallmentAmount
+        )
+
+        if (!merchantPolicy.supportsInstallment || finalPaymentAmount < effectiveMinAmount) {
             return InstallmentOptions.UNAVAILABLE
         }
 
