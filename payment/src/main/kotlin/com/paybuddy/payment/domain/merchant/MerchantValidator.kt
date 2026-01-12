@@ -1,5 +1,7 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.merchant
 
+import com.paybuddy.payment.domain.PaymentMethodType
+import com.paybuddy.payment.domain.PaymentPolicy
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 

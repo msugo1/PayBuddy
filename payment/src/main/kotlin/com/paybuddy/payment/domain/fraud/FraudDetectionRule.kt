@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.fraud
+
+import com.paybuddy.payment.domain.Card
 
 /**
  * 부정거래 탐지 규칙

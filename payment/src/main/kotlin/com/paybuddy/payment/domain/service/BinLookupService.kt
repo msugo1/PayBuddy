@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.service
+
+import com.paybuddy.payment.domain.*
 
 data class Bin(
     val number: String,

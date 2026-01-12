@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.service
+
+import com.paybuddy.payment.domain.*
 
 /**
  * 프로모션 조회 및 적용 조건 검증 서비스

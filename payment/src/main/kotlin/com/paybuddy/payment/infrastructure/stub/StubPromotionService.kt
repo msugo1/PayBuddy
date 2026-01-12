@@ -1,6 +1,7 @@
 package com.paybuddy.payment.infrastructure.stub
 
 import com.paybuddy.payment.domain.*
+import com.paybuddy.payment.domain.service.PromotionService
 import org.springframework.stereotype.Service
 
 /**

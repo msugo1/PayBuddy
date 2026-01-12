@@ -1,5 +1,7 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.installment
 
+import com.paybuddy.payment.domain.*
+import com.paybuddy.payment.domain.merchant.MerchantInstallmentPolicy
 import org.springframework.stereotype.Service
 
 @Service

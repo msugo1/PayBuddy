@@ -1,5 +1,7 @@
 package com.paybuddy.payment.domain
 
+import com.paybuddy.payment.domain.installment.*
+import com.paybuddy.payment.domain.merchant.MerchantInstallmentPolicy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

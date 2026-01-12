@@ -1,5 +1,6 @@
 package com.paybuddy.payment.domain
 
+import com.paybuddy.payment.domain.installment.Installment
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column

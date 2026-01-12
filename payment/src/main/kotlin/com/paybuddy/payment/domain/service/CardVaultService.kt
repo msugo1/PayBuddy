@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.service
+
+import com.paybuddy.payment.domain.*
 
 /**
  * Submit과 Confirm 사이에 민감한 카드 정보를 임시 보관하는 서비스

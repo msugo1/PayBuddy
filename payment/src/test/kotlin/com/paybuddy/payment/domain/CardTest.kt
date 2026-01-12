@@ -1,5 +1,6 @@
 package com.paybuddy.payment.domain
 
+import com.paybuddy.payment.domain.service.Bin
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

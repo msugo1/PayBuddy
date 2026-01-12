@@ -1,5 +1,6 @@
 package com.paybuddy.payment.domain
 
+import com.paybuddy.payment.domain.service.Bin
 import jakarta.persistence.Embeddable
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated

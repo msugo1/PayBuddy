@@ -1,7 +1,7 @@
 package com.paybuddy.payment.infrastructure.stub
 
-import com.paybuddy.payment.domain.MerchantLimitService
 import com.paybuddy.payment.domain.PaymentMethodType
+import com.paybuddy.payment.domain.merchant.MerchantLimitService
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 

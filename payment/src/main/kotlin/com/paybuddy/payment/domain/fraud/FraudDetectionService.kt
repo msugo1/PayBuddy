@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.fraud
+
+import com.paybuddy.payment.domain.Card
 
 import org.springframework.stereotype.Service
 

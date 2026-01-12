@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.installment
+
+import com.paybuddy.payment.domain.*
 
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable

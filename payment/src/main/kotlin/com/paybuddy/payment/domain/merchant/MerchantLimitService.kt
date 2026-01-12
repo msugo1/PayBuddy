@@ -1,4 +1,7 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.merchant
+
+import com.paybuddy.payment.domain.PaymentMethodType
+import com.paybuddy.payment.domain.PaymentPolicy
 
 interface MerchantLimitService {
     fun check(merchantId: String, paymentMethod: PaymentMethodType, amount: Long): Boolean

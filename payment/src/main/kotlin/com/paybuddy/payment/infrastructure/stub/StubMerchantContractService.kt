@@ -1,6 +1,11 @@
 package com.paybuddy.payment.infrastructure.stub
 
 import com.paybuddy.payment.domain.*
+import com.paybuddy.payment.domain.merchant.MerchantContract
+import com.paybuddy.payment.domain.merchant.MerchantContractService
+import com.paybuddy.payment.domain.merchant.MerchantStatus
+import com.paybuddy.payment.domain.merchant.PaymentMethodPolicy
+import com.paybuddy.payment.domain.merchant.MerchantInstallmentPolicy
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -21,7 +26,7 @@ class StubMerchantContractService : MerchantContractService {
                 PaymentMethodType.VIRTUAL_ACCOUNT to PaymentMethodPolicy(
                     enabled = false
                 ),
-                PaymentMethodType.SIMPLE_PAYMENT to PaymentMethodPolicy(
+                PaymentMethodType.EASY_PAY to PaymentMethodPolicy(
                     enabled = false
                 )
             ),

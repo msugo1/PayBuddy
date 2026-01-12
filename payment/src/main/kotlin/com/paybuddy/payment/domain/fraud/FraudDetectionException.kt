@@ -1,4 +1,6 @@
-package com.paybuddy.payment.domain
+package com.paybuddy.payment.domain.fraud
+
+import com.paybuddy.payment.domain.Card
 
 /**
  * FDS 검증 실패 예외
