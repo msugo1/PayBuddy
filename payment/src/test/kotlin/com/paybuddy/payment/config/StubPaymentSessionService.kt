@@ -1,21 +1,19 @@
 package com.paybuddy.payment.config
 
 import com.github.f4b6a3.ulid.Ulid
-import com.paybuddy.payment.domain.DefaultPaymentPolicy
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentAmount
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.RedirectUrl
-import com.paybuddy.payment.service.PaymentOperations
+import com.paybuddy.payment.service.PaymentSessionOperations
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import java.util.UUID
 
 /**
  * Contract Test용 Stub 구현체
  * OpenAPI 스펙에 맞는 고정된 응답을 반환합니다.
  */
-class StubPaymentService : PaymentOperations {
+class StubPaymentSessionService : PaymentSessionOperations {
 
     override fun prepare(
         merchantId: String,
@@ -43,5 +41,9 @@ class StubPaymentService : PaymentOperations {
             ),
             expiresAt = OffsetDateTime.now(ZoneOffset.UTC)
         )
+    }
+
+    override fun getOngoingSession(paymentKey: String): PaymentSession {
+        error("Not implemented for contract test")
     }
 }

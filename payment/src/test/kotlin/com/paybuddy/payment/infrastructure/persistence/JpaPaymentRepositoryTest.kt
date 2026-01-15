@@ -32,6 +32,7 @@ class JpaPaymentRepositoryTest {
             id = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
             paymentKey = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
             merchantId = "mch_123",
+            paymentMethodType = PaymentMethodType.CARD,
             status = PaymentStatus.INITIALIZED,
             originalAmount = 10000
         )
@@ -77,8 +78,8 @@ class JpaPaymentRepositoryTest {
 
         // @Embeddable PaymentResult 검증
         assertThat(entity.status).isEqualTo(PaymentStatus.FAILED)
-        assertThat(entity.cardPaymentDetails?.result?.errorCode).isEqualTo("CARD_DECLINED")
-        assertThat(entity.cardPaymentDetails?.result?.failureReason).isEqualTo("카드사 승인 거절")
+        assertThat(entity.paymentResult?.errorCode).isEqualTo("CARD_DECLINED")
+        assertThat(entity.paymentResult?.failureReason).isEqualTo("카드사 승인 거절")
     }
 
     @Test
@@ -88,6 +89,7 @@ class JpaPaymentRepositoryTest {
             id = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
             paymentKey = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
             merchantId = "mch_123",
+            paymentMethodType = PaymentMethodType.CARD,
             status = PaymentStatus.INITIALIZED,
             originalAmount = 10000
         )

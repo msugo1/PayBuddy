@@ -4,8 +4,10 @@ import com.atlassian.oai.validator.OpenApiInteractionValidator
 import com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.openApi
 import com.atlassian.oai.validator.report.LevelResolver
 import com.atlassian.oai.validator.report.ValidationReport.Level
-import com.paybuddy.payment.config.StubPaymentService
+import com.paybuddy.payment.application.PaymentOperationsRouter
+import com.paybuddy.payment.config.StubPaymentSessionService
 import com.paybuddy.payment.service.PaymentOperations
+import com.paybuddy.payment.service.PaymentSessionOperations
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -37,8 +39,13 @@ class PaymentsApiTest {
 
         @Bean
         @Primary
-        fun paymentOperations(): PaymentOperations {
-            return StubPaymentService()
+        fun paymentSessionOperations(): PaymentSessionOperations {
+            return StubPaymentSessionService()
+        }
+
+        @Bean
+        fun paymentOperationsRouter(): PaymentOperationsRouter {
+            return PaymentOperationsRouter(emptyList())
         }
 
         @Bean
