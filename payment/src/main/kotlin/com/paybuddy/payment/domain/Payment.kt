@@ -1,5 +1,6 @@
 package com.paybuddy.payment.domain
 
+import com.github.f4b6a3.ulid.UlidCreator
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -18,6 +19,10 @@ class Payment(
     @Column(nullable = false)
     val merchantId: String,
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val paymentMethodType: PaymentMethodType,
+
     status: PaymentStatus,
 
     @Version
@@ -26,7 +31,8 @@ class Payment(
     @Column(nullable = false)
     val originalAmount: Long,
 
-    @JdbcTypeCode(SqlTypes.JSON) @Column(
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(
         name = "effective_promotions",
         columnDefinition = "jsonb"
     )
@@ -34,6 +40,9 @@ class Payment(
 
     @Embedded
     var cardPaymentDetails: CardPaymentDetails? = null,
+
+    @Embedded
+    var paymentResult: PaymentResult? = null,
 
     @Column(nullable = false, updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
@@ -85,10 +94,10 @@ class Payment(
     }
 
     fun fail(errorCode: String, failureReason: String) {
-        checkNotNull(cardPaymentDetails) { "결제 수단 정보가 설정되지 않았습니다" }
         status = status.transitionTo(PaymentStatus.FAILED)
-        cardPaymentDetails = cardPaymentDetails!!.copy(
-            result = PaymentResult(errorCode = errorCode, failureReason = failureReason)
+        paymentResult = PaymentResult(
+            errorCode = errorCode,
+            failureReason = failureReason
         )
     }
 
@@ -112,6 +121,24 @@ class Payment(
     @PreUpdate
     fun preUpdate() {
         this.updatedAt = OffsetDateTime.now()
+    }
+
+    companion object {
+        fun initialize(
+            paymentKey: String,
+            merchantId: String,
+            paymentMethodType: PaymentMethodType,
+            originalAmount: Long
+        ): Payment {
+            return Payment(
+                id = UlidCreator.getMonotonicUlid().toString(),
+                paymentKey = paymentKey,
+                merchantId = merchantId,
+                paymentMethodType = paymentMethodType,
+                status = PaymentStatus.INITIALIZED,
+                originalAmount = originalAmount
+            )
+        }
     }
 
     override fun equals(other: Any?): Boolean {

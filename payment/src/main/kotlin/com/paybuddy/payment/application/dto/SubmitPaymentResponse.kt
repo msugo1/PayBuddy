@@ -25,11 +25,14 @@ data class AuthenticationRedirect(
 )
 
 enum class AuthenticationType {
+    THREE_DS,
+    ISP,
     THREE_D_SECURE,
     ACS_REDIRECT
 }
 
 enum class AuthenticationMethod {
+    REDIRECT,
     POST,
     GET,
     IFRAME

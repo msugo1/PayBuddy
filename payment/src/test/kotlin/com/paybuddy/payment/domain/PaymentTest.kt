@@ -156,8 +156,8 @@ class PaymentTest {
 
             // Then
             assertThat(payment.status).isEqualTo(PaymentStatus.FAILED)
-            assertThat(payment.cardPaymentDetails?.result?.errorCode).isEqualTo("VALIDATION_ERROR")
-            assertThat(payment.cardPaymentDetails?.result?.failureReason).isEqualTo("카드 정보 검증 실패")
+            assertThat(payment.paymentResult?.errorCode).isEqualTo("VALIDATION_ERROR")
+            assertThat(payment.paymentResult?.failureReason).isEqualTo("카드 정보 검증 실패")
         }
 
         @Test
@@ -171,17 +171,6 @@ class PaymentTest {
 
             // Then
             assertThat(payment.cardPaymentDetails).isEqualTo(cardDetails)
-        }
-
-        @Test
-        fun `결제 수단 정보가 없으면 실패 처리할 수 없다`() {
-            // Given
-            val payment = createPayment(status = PaymentStatus.INITIALIZED)
-
-            // When & Then
-            assertThatThrownBy {
-                payment.fail("ERROR", "실패 처리 시도")
-            }.isInstanceOf(IllegalStateException::class.java)
         }
 
         @Test
@@ -264,6 +253,7 @@ class PaymentTest {
         id: String = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
         paymentKey: String = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
         merchantId: String = "mch_123",
+        paymentMethodType: PaymentMethodType = PaymentMethodType.CARD,
         status: PaymentStatus = PaymentStatus.INITIALIZED,
         originalAmount: Long = 10000
     ): Payment {
@@ -271,6 +261,7 @@ class PaymentTest {
             id = id,
             paymentKey = paymentKey,
             merchantId = merchantId,
+            paymentMethodType = paymentMethodType,
             status = status,
             originalAmount = originalAmount
         )
@@ -313,6 +304,7 @@ class PaymentTest {
         id: String = "01JGXM9K3V7N2P8Q4R5S6T7U8V",
         paymentKey: String = "01JGXM9K3V7N2P8Q4R5S6T7U9W",
         merchantId: String = "mch_123",
+        paymentMethodType: PaymentMethodType = PaymentMethodType.CARD,
         status: PaymentStatus = PaymentStatus.INITIALIZED,
         originalAmount: Long = 10000,
         cardBrand: CardBrand? = CardBrand.VISA,
@@ -323,6 +315,7 @@ class PaymentTest {
             id = id,
             paymentKey = paymentKey,
             merchantId = merchantId,
+            paymentMethodType = paymentMethodType,
             status = status,
             originalAmount = originalAmount
         )

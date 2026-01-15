@@ -1,5 +1,6 @@
 package com.paybuddy.payment
 
+import com.paybuddy.payment.application.PaymentSessionService
 import com.paybuddy.payment.domain.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -28,8 +29,7 @@ class PaymentSessionServiceTest {
         paymentSessionFactory = PaymentSessionFactory(paymentKeyGenerator, paymentPolicy)
         paymentSessionService = PaymentSessionService(
             paymentSessionRepository = paymentSessionRepository,
-            paymentSessionFactory = paymentSessionFactory,
-            paymentGate = FakeExclusivePaymentGate(),
+            paymentSessionFactory = paymentSessionFactory
         )
         expiresAt = defaultCurrentTime
             .plusMinutes(paymentPolicy.defaultExpireMinutes)
