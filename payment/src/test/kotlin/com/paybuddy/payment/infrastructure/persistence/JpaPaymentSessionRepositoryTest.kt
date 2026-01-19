@@ -24,9 +24,12 @@ class JpaPaymentSessionRepositoryTest {
     @Autowired
     private lateinit var sut: JpaPaymentSessionRepository
 
+    // @SpringBootTest(CardPaymentUseCaseTest 등)에 @Transactional 사용하지 않은 상황이면 데이터가 테이블에 남아있음
+    // @DataJpaTest는 @Transactional이라 deleteAll() 사용 시 flush 순서(INSERT→DELETE) 문제로 unique constraint 위반 가능
+    // deleteAllInBatch()는 즉시 DELETE 쿼리 실행
     @BeforeEach
     fun tearDown() {
-        sut.deleteAll()
+        sut.deleteAllInBatch()
     }
 
     @Test

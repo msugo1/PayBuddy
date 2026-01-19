@@ -12,6 +12,7 @@ import com.paybuddy.payment.domain.merchant.MerchantLimitExceededException
 import com.paybuddy.payment.infrastructure.persistence.JpaPaymentRepository
 import com.paybuddy.payment.infrastructure.persistence.JpaPaymentSessionRepository
 import com.paybuddy.payment.infrastructure.persistence.JpaPromotionRepository
+import com.github.f4b6a3.ulid.Ulid
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -45,8 +46,8 @@ class CardPaymentUseCaseTest {
 
     @BeforeEach
     fun setUp() {
-        paymentRepository.deleteAll()
         paymentSessionRepository.deleteAll()
+        paymentRepository.deleteAll()
         promotionRepository.deleteAll()
     }
 
@@ -281,7 +282,7 @@ class CardPaymentUseCaseTest {
         expiresAt: OffsetDateTime = OffsetDateTime.now().plusMinutes(15)
     ): PaymentSession {
         return PaymentSession(
-            id = "pay_${System.nanoTime()}",
+            id = Ulid.fast().toString(),
             merchantId = "mch_123",
             orderId = "order_456",
             orderLine = OrderLine(
