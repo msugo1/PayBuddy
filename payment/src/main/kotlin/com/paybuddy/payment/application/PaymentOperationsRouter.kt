@@ -3,7 +3,7 @@ package com.paybuddy.payment.application
 import com.paybuddy.payment.api.model.PaymentSubmitRequest
 import com.paybuddy.payment.api.model.PaymentSubmitRequest.PaymentMethodTypeEnum
 import com.paybuddy.payment.application.dto.SubmitCardPaymentCommand
-import com.paybuddy.payment.application.dto.SubmitPaymentResponse
+import com.paybuddy.payment.application.dto.SubmitPaymentResult
 import com.paybuddy.payment.domain.PaymentMethodType
 import com.paybuddy.payment.service.PaymentOperations
 import org.springframework.stereotype.Component
@@ -14,14 +14,14 @@ class PaymentOperationsRouter(
 ) {
     private val routes = useCases.associateBy { it.paymentMethodType }
 
-    fun submit(request: PaymentSubmitRequest): SubmitPaymentResponse {
+    fun submit(request: PaymentSubmitRequest): SubmitPaymentResult {
         return when (request.paymentMethodType) {
             PaymentMethodTypeEnum.CARD -> submitCard(request)
             PaymentMethodTypeEnum.VIRTUAL_ACCOUNT -> TODO()
         }
     }
 
-    private fun submitCard(request: PaymentSubmitRequest): SubmitPaymentResponse {
+    private fun submitCard(request: PaymentSubmitRequest): SubmitPaymentResult {
         val card = request.card ?: error("Card information is required")
 
         val command = SubmitCardPaymentCommand(

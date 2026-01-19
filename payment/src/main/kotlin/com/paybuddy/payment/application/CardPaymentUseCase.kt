@@ -2,7 +2,7 @@ package com.paybuddy.payment.application
 
 import com.paybuddy.payment.application.dto.AuthenticationRedirect
 import com.paybuddy.payment.application.dto.SubmitCardPaymentCommand
-import com.paybuddy.payment.application.dto.SubmitPaymentResponse
+import com.paybuddy.payment.application.dto.SubmitPaymentResult
 import com.paybuddy.payment.application.dto.SubmitStatus
 import com.paybuddy.payment.domain.*
 import com.paybuddy.payment.domain.authentication.AuthenticationResult
@@ -40,7 +40,7 @@ class CardPaymentUseCase(
 
     override val paymentMethodType: PaymentMethodType = PaymentMethodType.CARD
 
-    fun submit(request: SubmitCardPaymentCommand): SubmitPaymentResponse {
+    fun submit(request: SubmitCardPaymentCommand): SubmitPaymentResult {
         val ongoingPaymentSession = paymentSessionService.getOngoingSession(request.paymentKey)
 
         val ongoingPayment = paymentRepository.findByPaymentKey(request.paymentKey)
@@ -157,11 +157,11 @@ class CardPaymentUseCase(
         payment: Payment,
         paymentDetails: CardPaymentDetails,
         authenticationRedirect: AuthenticationRedirect
-    ): SubmitPaymentResponse {
+    ): SubmitPaymentResult {
         payment.submit(paymentDetails)
         payment.requestAuthentication()
         paymentRepository.save(payment)
-        return SubmitPaymentResponse(
+        return SubmitPaymentResult(
             paymentKey = payment.paymentKey,
             status = SubmitStatus.AUTHENTICATION_REQUIRED,
             authentication = authenticationRedirect,
@@ -173,11 +173,11 @@ class CardPaymentUseCase(
         payment: Payment,
         paymentDetails: CardPaymentDetails,
         successUrl: String
-    ): SubmitPaymentResponse {
+    ): SubmitPaymentResult {
         payment.submit(paymentDetails)
         payment.completeWithoutAuthentication()
         paymentRepository.save(payment)
-        return SubmitPaymentResponse(
+        return SubmitPaymentResult(
             paymentKey = payment.paymentKey,
             status = SubmitStatus.PENDING_CONFIRM,
             authentication = null,

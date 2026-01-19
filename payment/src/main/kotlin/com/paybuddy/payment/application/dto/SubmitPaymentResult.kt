@@ -1,6 +1,6 @@
 package com.paybuddy.payment.application.dto
 
-data class SubmitPaymentResponse(
+data class SubmitPaymentResult(
     val paymentKey: String,
     val status: SubmitStatus,
     val authentication: AuthenticationRedirect? = null,

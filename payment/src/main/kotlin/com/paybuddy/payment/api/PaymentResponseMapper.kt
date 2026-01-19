@@ -4,11 +4,11 @@ import com.paybuddy.payment.api.model.PaymentSubmitResponse
 import com.paybuddy.payment.api.model.PaymentSubmitResponseAuthentication
 import com.paybuddy.payment.application.dto.AuthenticationMethod
 import com.paybuddy.payment.application.dto.AuthenticationType
-import com.paybuddy.payment.application.dto.SubmitPaymentResponse
+import com.paybuddy.payment.application.dto.SubmitPaymentResult
 import com.paybuddy.payment.application.dto.SubmitStatus
 import java.net.URI
 
-fun SubmitPaymentResponse.toApiResponse(): PaymentSubmitResponse {
+fun SubmitPaymentResult.toApiResponse(): PaymentSubmitResponse {
     val apiResponse = PaymentSubmitResponse()
         .paymentKey(this.paymentKey)
         .status(this.status.toApiEnum())
