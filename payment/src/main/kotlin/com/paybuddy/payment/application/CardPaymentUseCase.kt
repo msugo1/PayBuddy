@@ -115,6 +115,8 @@ class CardPaymentUseCase(
             installment = installment
         )
 
+        payment.submit(paymentDetails)
+
         val promotions = promotionRepository.findActivePromotions(payment.paymentMethodType)
         payment.addEffectivePromotions(
             promotions = promotions,
@@ -142,12 +144,10 @@ class CardPaymentUseCase(
         return when (authenticationResult) {
             is AuthenticationResult.Required -> submitWithAuthentication(
                 payment,
-                paymentDetails,
                 authenticationResult.redirect
             )
             is AuthenticationResult.NotRequired -> submitWithoutAuthentication(
                 payment,
-                paymentDetails,
                 ongoingPaymentSession.redirectUrl.success
             )
         }
@@ -155,10 +155,8 @@ class CardPaymentUseCase(
 
     private fun submitWithAuthentication(
         payment: Payment,
-        paymentDetails: CardPaymentDetails,
         authenticationRedirect: AuthenticationRedirect
     ): SubmitPaymentResult {
-        payment.submit(paymentDetails)
         payment.requestAuthentication()
         paymentRepository.save(payment)
         return SubmitPaymentResult(
@@ -171,10 +169,8 @@ class CardPaymentUseCase(
 
     private fun submitWithoutAuthentication(
         payment: Payment,
-        paymentDetails: CardPaymentDetails,
         successUrl: String
     ): SubmitPaymentResult {
-        payment.submit(paymentDetails)
         payment.completeWithoutAuthentication()
         paymentRepository.save(payment)
         return SubmitPaymentResult(

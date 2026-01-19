@@ -1,6 +1,7 @@
 package com.paybuddy.payment.infrastructure.stub
 
 import com.paybuddy.payment.domain.PaymentMethodType
+import com.paybuddy.payment.domain.merchant.MerchantLimitExceededException
 import com.paybuddy.payment.domain.merchant.MerchantLimitService
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
@@ -10,9 +11,11 @@ class StubMerchantLimitService : MerchantLimitService {
     private val defaultLimit = 100_000_000L
     private val consumed = ConcurrentHashMap<String, Long>()
 
-    override fun check(merchantId: String, paymentMethod: PaymentMethodType, amount: Long): Boolean {
+    override fun check(merchantId: String, paymentMethod: PaymentMethodType, amount: Long) {
         val currentConsumed = consumed.getOrDefault(merchantId, 0L)
-        return (currentConsumed + amount) <= defaultLimit
+        if ((currentConsumed + amount) > defaultLimit) {
+            throw MerchantLimitExceededException(merchantId)
+        }
     }
 
     override fun consume(merchantId: String, paymentId: String, amount: Long) {
