@@ -2,6 +2,7 @@ package com.paybuddy.payment.infrastructure.persistence
 
 import com.paybuddy.payment.domain.PaymentSession
 import com.paybuddy.payment.domain.PaymentSessionRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,5 +16,9 @@ class PaymentSessionRepositoryAdapter(
 
     override fun findOngoingPaymentSession(merchantId: String, orderId: String): PaymentSession? {
         return jpaPaymentSessionRepository.findByMerchantIdAndOrderIdAndExpiredFalse(merchantId, orderId)
+    }
+
+    override fun findOngoingPaymentSession(paymentKey: String): PaymentSession? {
+        return jpaPaymentSessionRepository.findByIdOrNull(paymentKey)
     }
 }

@@ -4,7 +4,7 @@ import com.paybuddy.payment.domain.PaymentMethodType
 import com.paybuddy.payment.domain.PaymentPolicy
 
 interface MerchantLimitService {
-    fun check(merchantId: String, paymentMethod: PaymentMethodType, amount: Long): Boolean
+    fun check(merchantId: String, paymentMethod: PaymentMethodType, amount: Long)
     fun consume(merchantId: String, paymentId: String, amount: Long)
     fun restore(merchantId: String, paymentId: String, amount: Long)
 }

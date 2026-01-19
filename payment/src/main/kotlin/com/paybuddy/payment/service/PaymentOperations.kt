@@ -1,4 +1,7 @@
 package com.paybuddy.payment.service
 
-interface PaymentOperations : PaymentPreparable {
+import com.paybuddy.payment.domain.PaymentMethodType
+
+interface PaymentOperations {
+    val paymentMethodType: PaymentMethodType
 }

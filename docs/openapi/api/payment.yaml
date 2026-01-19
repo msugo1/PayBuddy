@@ -112,6 +112,102 @@ paths:
                     instance: '/payments/ready'
                     error_code: 'IDEMPOTENCY_CONFLICT'
 
+  /checkout/submit:
+    post:
+      tags:
+        - Payments
+      summary: 결제수단 제출 및 저장
+      description: |-
+        결제수단을 제출하고 저장합니다. 서버가 인증(3DS, ISP) 필요 여부를 판단하여 NextAction을 반환합니다.
+
+        **프로세스**:
+        1. 결제수단 정보를 암호화하여 저장 (10분간 유효)
+        2. 카드 유효성 검증 (번호, 만료일, CVC 등)
+        3. 사기 탐지 및 한도 확인
+        4. 인증 필요 여부 판단 (금액, 카드 발급국가 등)
+        5. 인증 필요 시 인증 정보 반환, 불필요 시 PENDING_CONFIRM 상태 반환
+
+        **인증 프로세스**:
+        - 국내 카드 + 고액: ISP 인증
+        - 해외 카드: 3DS 인증
+        - 국내 카드 + 저액: 인증 불필요
+
+        **다음 단계**:
+        - 인증 필요: 클라이언트가 인증 페이지로 리다이렉트 → 인증 완료 후 confirm API 호출
+        - 인증 불필요: 바로 confirm API 호출하여 최종 승인
+      operationId: submitPaymentMethod
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/payment.yaml#/PaymentSubmitRequest'
+            examples:
+              card_payment:
+                summary: 카드 결제
+                value:
+                  payment_key: "01JGXM9K3V7N2P8Q4R5S6T7U8V"
+                  payment_method_type: "CARD"
+                  card:
+                    card_number: "4111111111111111"
+                    expiry_year: "25"
+                    expiry_month: "12"
+                    cvc: "123"
+                    installment_months: 0
+      responses:
+        '200':
+          description: 제출 성공, 인증 필요 여부 및 정보 반환
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/payment.yaml#/PaymentSubmitResponse'
+              examples:
+                authentication_required:
+                  summary: 인증 필요 (3DS)
+                  value:
+                    payment_key: "01JGXM9K3V7N2P8Q4R5S6T7U8V"
+                    status: "AUTHENTICATION_REQUIRED"
+                    authentication:
+                      type: "THREE_DS"
+                      method: "POST"
+                      url: "https://acs.card.com/auth"
+                      data:
+                        creq: "eyJ..."
+                        termUrl: "https://pg.com/callback/3ds"
+                authentication_not_required:
+                  summary: 인증 불필요
+                  value:
+                    payment_key: "01JGXM9K3V7N2P8Q4R5S6T7U8V"
+                    status: "PENDING_CONFIRM"
+                    redirect_url: "https://merchant.example.com/pay/success"
+        '400':
+          description: 잘못된 요청
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+        '401':
+          description: 인증 실패
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+        '422':
+          description: 처리할 수 없는 요청 (카드 검증 실패 등)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../error.yaml#/ErrorResponse'
+              examples:
+                card_validation_failed:
+                  summary: 카드 검증 실패
+                  value:
+                    type: 'about:blank'
+                    title: 'Payment validation failed'
+                    status: 422
+                    detail: '허용되지 않는 카드 브랜드입니다'
+                    error_code: 'CARD_BRAND_NOT_ALLOWED'
+
   /payments/confirm:
     post:
       tags:

@@ -15,6 +15,10 @@ class FakePaymentSessionRepository : PaymentSessionRepository {
         return sessions[key]?.takeIf { !it.expired }
     }
 
+    override fun findOngoingPaymentSession(paymentKey: String): PaymentSession? {
+        return sessions.values.firstOrNull { it.id == paymentKey && !it.expired }
+    }
+
     fun findByKey(merchantId: String, orderId: String): PaymentSession? {
         return sessions[merchantId to orderId]
     }

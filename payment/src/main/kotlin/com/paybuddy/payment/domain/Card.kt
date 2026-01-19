@@ -30,7 +30,7 @@ data class Card(
             expiryMonth: Int,
             expiryYear: Int,
             holderName: String?,
-            binData: Bin
+            bin: Bin
         ): Card {
             validateCardNumber(cardNumber)
             validateExpiry(expiryMonth, expiryYear)
@@ -40,14 +40,14 @@ data class Card(
                 expiryMonth = expiryMonth,
                 expiryYear = expiryYear,
                 holderName = holderName,
-                bin = binData.number,
-                brand = binData.brand,
-                issuerCode = binData.issuerCode,
-                acquirerCode = binData.acquirerCode,
-                cardType = binData.cardType,
-                ownerType = binData.ownerType,
-                issuedCountry = binData.issuedCountry,
-                productCode = binData.productCode
+                bin = bin.number,
+                brand = bin.brand,
+                issuerCode = bin.issuerCode,
+                acquirerCode = bin.acquirerCode,
+                cardType = bin.cardType,
+                ownerType = bin.ownerType,
+                issuedCountry = bin.issuedCountry,
+                productCode = bin.productCode
             )
         }
 

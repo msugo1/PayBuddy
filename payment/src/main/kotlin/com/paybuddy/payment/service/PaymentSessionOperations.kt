@@ -3,7 +3,7 @@ package com.paybuddy.payment.service
 import com.paybuddy.payment.domain.OrderLine
 import com.paybuddy.payment.domain.PaymentSession
 
-interface PaymentPreparable {
+interface PaymentSessionOperations {
     fun prepare(
         merchantId: String,
         orderId: String,
@@ -14,4 +14,6 @@ interface PaymentPreparable {
         successUrl: String,
         failUrl: String
     ): PaymentSession
+
+    fun getOngoingSession(paymentKey: String): PaymentSession
 }

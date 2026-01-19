@@ -7,6 +7,21 @@ data class InstallmentOptions(
     val availableMonths: Set<Int>,
     val interestFreeMonths: Set<Int>
 ) {
+    fun createInstallment(requestedMonths: Int): Installment {
+        if (requestedMonths == 0) {
+            return Installment(months = 0, isInterestFree = false)
+        }
+
+        require(availableMonths.contains(requestedMonths)) {
+            "선택한 할부 개월 수를 사용할 수 없습니다"
+        }
+
+        return Installment(
+            months = requestedMonths,
+            isInterestFree = interestFreeMonths.contains(requestedMonths)
+        )
+    }
+
     companion object {
         val UNAVAILABLE = InstallmentOptions(
             supported = false,

@@ -1,7 +1,8 @@
 CREATE TABLE payment (
     id VARCHAR(26) PRIMARY KEY,
-    payment_key VARCHAR(26) NOT NULL,
+    payment_key VARCHAR(26) NOT NULL UNIQUE,
     merchant_id VARCHAR(255) NOT NULL,
+    payment_method_type VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
     version BIGINT NOT NULL DEFAULT 0,
     original_amount BIGINT NOT NULL,

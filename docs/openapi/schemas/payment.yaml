@@ -1199,6 +1199,8 @@ PaymentReadyRequest:
     - order_id
     - order_line
     - total_amount
+    - supply_amount
+    - vat_amount
     - success_url
     - fail_url
   properties:
@@ -1295,6 +1297,156 @@ PaymentReadyResponse:
       type: string
       format: date-time
       description: 결제 세션 만료 시각 (기본 10분)
+
+PaymentSubmitRequest:
+  type: object
+  description: |-
+    결제수단 제출 요청. payment_method_type에 따라 해당 필드를 채워서 전달합니다.
+    - CARD: card 객체 필수
+    - VIRTUAL_ACCOUNT: virtual_account 객체 필수 (향후 구현)
+  required:
+    - payment_key
+    - payment_method_type
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키 (ready API에서 발급받은 키)
+      minLength: 26
+      maxLength: 26
+      example: 01JGXM9K3V7N2P8Q4R5S6T7U8V
+    payment_method_type:
+      type: string
+      enum: [CARD, VIRTUAL_ACCOUNT]
+      description: 결제수단 타입
+      example: CARD
+    card:
+      type: object
+      nullable: true
+      description: 카드 결제 정보 (payment_method_type이 CARD일 때 필수)
+      required:
+        - card_number
+        - expiry_year
+        - expiry_month
+        - cvc
+      properties:
+        card_number:
+          type: string
+          description: 카드번호
+          pattern: '^[0-9]{13,19}$'
+          example: "4111111111111111"
+        expiry_year:
+          type: string
+          description: 카드 만료 연도 (YY 형식)
+          pattern: '^[0-9]{2}$'
+          example: "25"
+        expiry_month:
+          type: string
+          description: 카드 만료 월 (MM 형식)
+          pattern: '^(0[1-9]|1[0-2])$'
+          example: "12"
+        cvc:
+          type: string
+          description: 카드 CVC/CVV
+          pattern: '^[0-9]{3,4}$'
+          example: "123"
+        holder_name:
+          type: string
+          description: 카드 소유자명 (선택)
+          maxLength: 50
+          example: "홍길동"
+        installment_months:
+          type: integer
+          description: 할부 개월 수 (0=일시불)
+          minimum: 0
+          maximum: 36
+          default: 0
+          example: 0
+    virtual_account:
+      type: object
+      nullable: true
+      description: 가상계좌 결제 정보 (payment_method_type이 VIRTUAL_ACCOUNT일 때 필수, 향후 구현)
+      required:
+        - bank_code
+      properties:
+        bank_code:
+          type: string
+          description: 은행 코드
+          example: "004"
+        depositor_name:
+          type: string
+          description: 입금자명
+          maxLength: 20
+          example: "홍길동"
+
+PaymentSubmitResponse:
+  type: object
+  description: 결제수단 제출 응답. 인증 필요 여부에 따라 status와 authentication 정보를 반환합니다.
+  required:
+    - payment_key
+    - status
+  properties:
+    payment_key:
+      type: string
+      description: 결제 고유키
+      example: 01JGXM9K3V7N2P8Q4R5S6T7U8V
+    status:
+      type: string
+      enum: [AUTHENTICATION_REQUIRED, PENDING_CONFIRM, FAILED]
+      description: |-
+        결제 상태
+        - AUTHENTICATION_REQUIRED: 3DS 등 추가 인증 필요
+        - PENDING_CONFIRM: 인증 불필요, confirm 단계로 진행 가능
+        - FAILED: 결제수단 검증 실패
+      example: AUTHENTICATION_REQUIRED
+    authentication:
+      type: object
+      description: 인증 정보 (status가 AUTHENTICATION_REQUIRED인 경우에만 포함)
+      nullable: true
+      required:
+        - type
+        - method
+        - url
+        - data
+      properties:
+        type:
+          type: string
+          enum: [ISP, THREE_DS]
+          description: 인증 타입
+          example: THREE_DS
+        method:
+          type: string
+          enum: [GET, POST, REDIRECT]
+          description: HTTP 메소드
+          example: POST
+        url:
+          type: string
+          format: uri
+          description: 인증 URL
+          example: "https://acs.card.com/auth"
+        data:
+          type: object
+          description: 인증 요청 데이터 (key-value 형식)
+          additionalProperties:
+            type: string
+          example:
+            creq: "eyJ..."
+            termUrl: "https://pg.com/callback/3ds"
+    redirect_url:
+      type: string
+      format: uri
+      nullable: true
+      description: 리다이렉트 URL (status가 PENDING_CONFIRM인 경우, ready에서 전달한 success_url)
+      example: "https://merchant.example.com/pay/success"
+    error_code:
+      type: string
+      nullable: true
+      description: 에러 코드 (status가 FAILED인 경우에만 포함)
+      example: "CARD_BRAND_NOT_ALLOWED"
+    error_message:
+      type: string
+      nullable: true
+      description: 에러 메시지 (status가 FAILED인 경우에만 포함)
+      example: "허용되지 않는 카드 브랜드입니다."
 
 PaymentConfirmRequest:
   type: object

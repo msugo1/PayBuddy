@@ -1,8 +1,11 @@
 package com.paybuddy.payment.api
 
 import com.paybuddy.payment.api.model.MerchantInfo
-import com.paybuddy.payment.service.PaymentOperations
+import com.paybuddy.payment.application.PaymentOperationsRouter
+import com.paybuddy.payment.service.PaymentSessionOperations
 import com.paybuddy.payment.api.model.NextActionNone
+import com.paybuddy.payment.api.model.PaymentSubmitRequest
+import com.paybuddy.payment.api.model.PaymentSubmitResponse
 import com.paybuddy.payment.api.model.PaymentConfirmRequest
 import com.paybuddy.payment.api.model.PaymentConfirmResponse
 import com.paybuddy.payment.api.model.PaymentDetailResponse
@@ -31,7 +34,8 @@ import java.time.ZoneOffset
 
 @RestController
 class PaymentsApiController(
-    private val paymentOperations: PaymentOperations,
+    private val paymentSessionService: PaymentSessionOperations,
+    private val paymentOperationsRouter: PaymentOperationsRouter,
     private val idempotencyValidator: IdempotencyValidator
 ) : PaymentsApi {
 
@@ -49,6 +53,7 @@ class PaymentsApiController(
             .status(HttpStatus.CONFLICT)
             .body(problem)
     }
+
     @ExceptionHandler(IdempotencyConflictException::class)
     fun handleIdempotencyConflict(
         e: IdempotencyConflictException
@@ -144,6 +149,13 @@ class PaymentsApiController(
         return ResponseEntity.ok(response)
     }
 
+    override fun submitPaymentMethod(
+        paymentSubmitRequest: @Valid PaymentSubmitRequest
+    ): ResponseEntity<PaymentSubmitResponse> {
+        val result = paymentOperationsRouter.submit(paymentSubmitRequest)
+        return ResponseEntity.ok(result.toApiResponse())
+    }
+
     override fun readyPayment(
         idempotencyKey: @NotNull String,
         paymentReadyRequest: @Valid PaymentReadyRequest
@@ -153,6 +165,7 @@ class PaymentsApiController(
             paymentReadyRequest.orderId,
             paymentReadyRequest.totalAmount
         )
+
         idempotencyValidator.validate(idempotencyKey, requestHash)
 
         val internalOrderLine = OrderLine(
@@ -166,13 +179,13 @@ class PaymentsApiController(
             }
         )
 
-        val paymentSession = paymentOperations.prepare(
+        val paymentSession = paymentSessionService.prepare(
             merchantId = paymentReadyRequest.merchantId,
             orderId = paymentReadyRequest.orderId,
             orderLine = internalOrderLine,
             totalAmount = paymentReadyRequest.totalAmount,
-            supplyAmount = paymentReadyRequest.supplyAmount ?: 0,
-            vatAmount = paymentReadyRequest.vatAmount ?: 0,
+            supplyAmount = paymentReadyRequest.supplyAmount,
+            vatAmount = paymentReadyRequest.vatAmount,
             successUrl = paymentReadyRequest.successUrl.toString(),
             failUrl = paymentReadyRequest.failUrl.toString()
         )

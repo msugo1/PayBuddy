@@ -1,6 +1,6 @@
 package com.paybuddy.payment.application.dto
 
-data class SubmitPaymentResponse(
+data class SubmitPaymentResult(
     val paymentKey: String,
     val status: SubmitStatus,
     val authentication: AuthenticationRedirect? = null,
@@ -25,11 +25,14 @@ data class AuthenticationRedirect(
 )
 
 enum class AuthenticationType {
+    THREE_DS,
+    ISP,
     THREE_D_SECURE,
     ACS_REDIRECT
 }
 
 enum class AuthenticationMethod {
+    REDIRECT,
     POST,
     GET,
     IFRAME

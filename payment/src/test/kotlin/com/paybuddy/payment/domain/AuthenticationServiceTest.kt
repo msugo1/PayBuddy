@@ -1,20 +1,21 @@
 package com.paybuddy.payment.domain
 
 import com.paybuddy.payment.domain.authentication.AuthenticationPolicyProvider
-import com.paybuddy.payment.domain.authentication.AuthenticationRule
-import com.paybuddy.payment.infrastructure.stub.StubAuthenticationRule
+import com.paybuddy.payment.domain.authentication.AuthenticationResult
+import com.paybuddy.payment.domain.authentication.AuthenticationService
+import com.paybuddy.payment.infrastructure.stub.StubAuthenticationService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
-class AuthenticationRuleTest {
+class AuthenticationServiceTest {
 
     private val policyProvider = object : AuthenticationPolicyProvider {
-        override fun getHighAmountThreshold(): Long = 300_000L
-        override fun getExemptionCountries(): Set<String> = setOf("KR")
+        override val highAmountThreshold: Long = 300_000L
+        override val exemptionCountries: Set<String> = setOf("KR")
     }
 
-    private val sut: AuthenticationRule = StubAuthenticationRule(policyProvider)
+    private val sut: AuthenticationService = StubAuthenticationService(policyProvider)
 
     @ParameterizedTest
     @CsvSource(
@@ -28,10 +29,10 @@ class AuthenticationRuleTest {
         val card = createCard(issuedCountry)
 
         // When
-        val result = sut.requiresAuthentication(card, amount, "mch_123")
+        val result = sut.prepareAuthentication(card, amount, "mch_123")
 
         // Then
-        assertThat(result).isTrue()
+        assertThat(result).isInstanceOf(AuthenticationResult.Required::class.java)
     }
 
     @ParameterizedTest
@@ -45,10 +46,10 @@ class AuthenticationRuleTest {
         val card = createCard(issuedCountry)
 
         // When
-        val result = sut.requiresAuthentication(card, amount, "mch_123")
+        val result = sut.prepareAuthentication(card, amount, "mch_123")
 
         // Then
-        assertThat(result).isFalse()
+        assertThat(result).isEqualTo(AuthenticationResult.NotRequired)
     }
 
     private fun createCard(issuedCountry: String): Card {

@@ -32,10 +32,7 @@ data class CardPaymentDetails(
     val card: Card,
 
     @Embedded
-    val installment: Installment?,
-
-    @Embedded
-    val result: PaymentResult? = null,
+    val installment: Installment?
 )
 
 @Embeddable

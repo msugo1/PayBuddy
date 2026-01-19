@@ -7,11 +7,6 @@ import org.springframework.stereotype.Component
 @Component
 @ConfigurationProperties(prefix = "payment.authentication")
 class PropertiesAuthenticationPolicyProvider : AuthenticationPolicyProvider {
-
-    lateinit var exemptionCountries: Set<String>
-    var highAmountThreshold: Long = 300_000L
-
-    override fun getHighAmountThreshold(): Long = highAmountThreshold
-
-    override fun getExemptionCountries(): Set<String> = exemptionCountries
+    override lateinit var exemptionCountries: Set<String>
+    override var highAmountThreshold: Long = 300_000L
 }

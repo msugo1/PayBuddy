@@ -17,6 +17,13 @@ spring:
 payment:
   gate:
     lock-ttl-seconds: 2
+  authentication:
+    exemption-countries: KR
+    high-amount-threshold: 100000
+
+fraud:
+  country-block:
+    countries: KR,US,JP
 
 logging:
   level:

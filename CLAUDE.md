@@ -41,6 +41,9 @@ if (condition) {
 if (condition) return true
 ```
 
+### Import 규칙
+- **Full import 금지**: 파일 상단에 import 선언 후 간단한 이름 사용
+
 ## 단위 테스트 가이드
 
 ### 테스트 범위

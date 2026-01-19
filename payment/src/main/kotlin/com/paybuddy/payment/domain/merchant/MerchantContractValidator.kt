@@ -1,28 +1,21 @@
 package com.paybuddy.payment.domain.merchant
 
 import com.paybuddy.payment.domain.PaymentMethodType
-import com.paybuddy.payment.domain.PaymentPolicy
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
 @Component
-class MerchantContractValidator(
-    private val merchantContractService: MerchantContractService,
-    private val merchantLimitService: MerchantLimitService,
-    private val paymentPolicy: PaymentPolicy
-) {
+class MerchantContractValidator {
     fun validate(
-        merchantId: String,
+        contract: MerchantContract,
         paymentMethod: PaymentMethodType,
-        amount: Long
+        amount: Long,
+        minPaymentAmount: Long
     ) {
-        val contract = merchantContractService.getActiveContract(merchantId)
-
         validateMerchantStatus(contract)
         validateContractNotExpired(contract)
         validatePaymentMethodAllowed(contract, paymentMethod)
-        validateMinimumAmount(contract, paymentMethod, amount)
-        validateMerchantLimit(merchantId, paymentMethod, amount)
+        validateMinimumAmount(contract, paymentMethod, amount, minPaymentAmount)
     }
 
     private fun validateMerchantStatus(contract: MerchantContract) {
@@ -62,9 +55,9 @@ class MerchantContractValidator(
     private fun validateMinimumAmount(
         contract: MerchantContract,
         paymentMethod: PaymentMethodType,
-        amount: Long
+        amount: Long,
+        minPaymentAmount: Long
     ) {
-        val globalMinAmount = paymentPolicy.minPaymentAmount
         val merchantMinAmount = contract.paymentMethodPolicies[paymentMethod]?.minAmount
 
         /**
@@ -78,21 +71,10 @@ class MerchantContractValidator(
          *
          * 이유: 플랫폼 정책은 모든 거래에 적용되는 최소 기준이므로 하위 설정으로 우회 불가
          */
-        val effectiveMinAmount = maxOf(globalMinAmount, merchantMinAmount ?: 0L)
+        val effectiveMinAmount = maxOf(minPaymentAmount, merchantMinAmount ?: 0L)
 
         if (amount < effectiveMinAmount) {
             throw AmountBelowMinimumException(amount, effectiveMinAmount)
-        }
-    }
-
-    private fun validateMerchantLimit(
-        merchantId: String,
-        paymentMethod: PaymentMethodType,
-        amount: Long
-    ) {
-        val withinLimit = merchantLimitService.check(merchantId, paymentMethod, amount)
-        if (!withinLimit) {
-            throw MerchantLimitExceededException(merchantId)
         }
     }
 }

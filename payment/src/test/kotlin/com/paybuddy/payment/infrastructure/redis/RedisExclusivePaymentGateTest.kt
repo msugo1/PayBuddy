@@ -1,11 +1,13 @@
 package com.paybuddy.payment.infrastructure.redis
 
+import com.paybuddy.payment.PaymentApplicationTests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.test.context.ActiveProfiles
 import java.util.concurrent.CountDownLatch
@@ -15,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
+@Import(PaymentApplicationTests.TestConfig::class)
 @DisplayName("RedisExclusivePaymentGate 통합 테스트")
 class RedisExclusivePaymentGateTest {
 
